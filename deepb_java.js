@@ -288,10 +288,16 @@ async function toggleTableRows(show = false) {
     const rows = document.querySelectorAll('#rad1, #rad2, #rad3, #rad4');
     console.log(`Fant ${rows.length} rader å toggle`);
     
-    for (const row of rows) {
+    rows.forEach(row => {
+        console.log('Rad:', row.id);
+        console.log('Nåværende visibility:', getComputedStyle(row).visibility);
+        console.log('Nåværende display:', getComputedStyle(row).display);
+        
         row.style.visibility = show ? 'visible' : 'hidden';
-        console.log(`Satte visibility: ${show ? 'visible' : 'hidden'} på rad ${row.id}`);
-    }
+        
+        console.log('Etter endring - visibility:', getComputedStyle(row).visibility);
+        console.log('Etter endring - display:', getComputedStyle(row).display);
+    });
 }
 
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
