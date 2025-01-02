@@ -1,3 +1,25 @@
+// Legg til dette helt øverst i filen, før DOMContentLoaded
+if (window.Webflow) {
+    console.log("Webflow detected, attempting to disable form handling");
+    window.Webflow.destroy();
+}
+
+// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
+async function waitForElement(selector, maxAttempts = 20) {
+    console.log(`Venter på element: ${selector}`);
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const element = document.querySelector(selector);
+        if (element) {
+            console.log(`Fant element: ${selector}`);
+            return element;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log(`Forsøk ${attempt + 1}/${maxAttempts} på å finne ${selector}`);
+    }
+    throw new Error(`Kunne ikke finne element: ${selector}`);
+}
+
 // 1) Funksjon for å utføre DeepB-søk
 async function performSearch(searchText, numResults = 20) {
     const button = document.getElementById('sok_deepb');
@@ -317,9 +339,88 @@ async function toggleTableRows(show = false) {
 }
 
 // Vent til DOM er helt lastet
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
+    
+    // Skjul radene umiddelbart
     toggleTableRows(false);
+    
+    // Backup: Prøv igjen etter at Webflow er helt ferdig
+    setTimeout(() => {
+        toggleTableRows(false);
+        console.log("Kjørte toggleTableRows på nytt etter timeout");
+    }, 500);
+
+    // Håndter url_form
+    const urlForm = document.getElementById('url_form');
+    if (urlForm) {
+        urlForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const urlInput = document.getElementById('firma_url');
+            if (!urlInput || !urlInput.value.trim()) {
+                alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
+                return;
+            }
+
+            const strippedUrl = stripUrl(urlInput.value.trim());
+            if (!strippedUrl) {
+                alert("Ugyldig URL. Vennligst skriv inn en korrekt URL.");
+                return;
+            }
+
+            console.log("Strippet URL:", strippedUrl);
+            urlInput.value = strippedUrl;
+            
+            fetchSummaryFromUrl();
+        });
+    }
+
+    // Håndter deepb_form
+    const deepbForm = document.getElementById('deepb_form');
+    console.log("Looking for deepb_form:", deepbForm);
+
+    if (deepbForm) {
+        // Fjern Webflow's form listeners
+        deepbForm.setAttribute('data-wf-form-id', 'none');
+        deepbForm.removeAttribute('data-name');
+        
+        deepbForm.addEventListener('submit', function(e) {
+            console.log("DeepB form submission intercepted");
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const searchText = document.getElementById('firma_text');
+            if (!searchText || !searchText.value.trim()) {
+                alert("Vennligst fyll inn søketekst.");
+                return;
+            }
+            performSearch(searchText.value.trim());
+            return false;
+        });
+    }
+
+    // Hent og sett opp knapper
+    const sokDeepbButton = document.getElementById('sok_deepb');
+    const sokButton = document.getElementById('sok_button');
+
+    // Sett type="button" på begge knapper
+    if (sokDeepbButton) sokDeepbButton.setAttribute('type', 'button');
+    if (sokButton) sokButton.setAttribute('type', 'button');
+
+    // Knytt click-handlers til knappene
+    if (sokDeepbButton) {
+        sokDeepbButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            const searchText = document.getElementById('firma_text');
+            if (!searchText || !searchText.value.trim()) {
+                alert("Vennligst fyll inn søketekst.");
+                return;
+            }
+            performSearch(searchText.value.trim());
+        });
+    }
 });
 
 // Kjør når siden er helt lastet
