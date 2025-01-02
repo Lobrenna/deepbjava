@@ -250,11 +250,11 @@ async function updateRow(row, result) {
     try {
         console.log(`Starter oppdatering av rad ${row.id} med resultat:`, result);
         
-        // Vis raden med CSS-klasse i stedet for inline style
+        // Vis raden og gjør den klikkbar
         row.classList.remove('hidden-row');
         row.classList.add('table-row-clickable');
         
-        // Legg til click handler direkte på raden
+        // Legg til click handler
         row.addEventListener('click', function(e) {
             console.log('Rad klikket:', row.id);
             showDetailModal(result);
@@ -369,7 +369,6 @@ async function waitForElement(selector, maxAttempts = 20) {
 function showDetailModal(result) {
     console.log('Viser modal for:', result);
     
-    // Opprett modal hvis den ikke eksisterer
     let modal = document.querySelector('.info-modal');
     let backdrop = document.querySelector('.modal-backdrop');
     
@@ -384,7 +383,6 @@ function showDetailModal(result) {
         document.body.appendChild(backdrop);
     }
 
-    // Formater innholdet
     modal.innerHTML = `
         <h3>${result.domene}</h3>
         <p><strong>Likhetsscore:</strong> ${result.score}</p>
@@ -393,17 +391,11 @@ function showDetailModal(result) {
         <button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px;">Lukk</button>
     `;
 
-    // Vis modal og backdrop
     modal.style.display = 'block';
     backdrop.style.display = 'block';
-
-    // Legg til click handler på backdrop
     backdrop.onclick = closeDetailModal;
-    
-    console.log('Modal vist');
 }
 
-// Legg til funksjon for å lukke modal
 function closeDetailModal() {
     const modal = document.querySelector('.info-modal');
     const backdrop = document.querySelector('.modal-backdrop');
@@ -539,58 +531,55 @@ if (window.Webflow && window.Webflow.push) {
 }
 
 // Legg til CSS-klasser i head
+const modalStyles = `
+.hidden-row { visibility: hidden !important; }
+.waiting { cursor: wait !important; }
+.button-loading {
+    opacity: 0.7 !important;
+    cursor: wait !important;
+    pointer-events: none !important;
+}
+.spinner {
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+.info-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    max-width: 80%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+.table-row-clickable {
+    cursor: pointer;
+}
+.table-row-clickable:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}`;
+
 const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-    .hidden-row {
-        visibility: hidden !important;
-    }
-    .waiting {
-        cursor: wait !important;
-    }
-    .button-loading {
-        opacity: 0.7 !important;
-        cursor: wait !important;
-        pointer-events: none !important;
-    }
-    .spinner {
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-    }
-    .info-modal {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        z-index: 1000;
-        max-width: 80%;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-    .modal-backdrop {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 999;
-    }
-    .table-row-clickable {
-        cursor: pointer;
-    }
-    .table-row-clickable:hover {
-        background-color: rgba(0,0,0,0.05);
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-`;
+styleSheet.textContent = modalStyles;
 document.head.appendChild(styleSheet);
