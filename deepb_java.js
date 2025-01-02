@@ -282,6 +282,15 @@ function stripUrl(inputUrl) {
     }
 }
 
+// Legg til CSS-klasse i head
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    .hidden-row {
+        visibility: hidden !important;
+    }
+`;
+document.head.appendChild(styleSheet);
+
 // Gjør toggleTableRows spesifikk for rad1-4
 async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
@@ -289,26 +298,32 @@ async function toggleTableRows(show = false) {
     console.log(`Fant ${rows.length} rader å toggle`);
     
     rows.forEach(row => {
-        row.style.visibility = show ? 'visible' : 'hidden';
-        console.log(`Satte visibility: ${show ? 'visible' : 'hidden'} på rad ${row.id}`);
+        if (row) {
+            if (show) {
+                row.classList.remove('hidden-row');
+            } else {
+                row.classList.add('hidden-row');
+            }
+            console.log(`${show ? 'Viste' : 'Skjulte'} rad ${row.id}`);
+        }
     });
 }
 
 // Vent til DOM er helt lastet
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded");
     toggleTableRows(false);
 });
 
 // Kjør når siden er helt lastet
-window.addEventListener('load', function() {
+window.addEventListener('load', () => {
     console.log("Window fully loaded");
     toggleTableRows(false);
 });
 
 // Kjør når Webflow er klar
 if (window.Webflow && window.Webflow.push) {
-    window.Webflow.push(function() {
+    window.Webflow.push(() => {
         console.log("Webflow ready");
         toggleTableRows(false);
     });
