@@ -302,9 +302,18 @@ if (window.Webflow) {
     window.Webflow.destroy();
 }
 
-// Kjør toggleTableRows umiddelbart når scriptet lastes
+// Legg til CSS-styling for å skjule tabellen ved oppstart
+const style = document.createElement('style');
+style.textContent = `
+    .table .table-row-grey, 
+    .table .table-row-white {
+        display: none !important;
+    }
+`;
+document.head.appendChild(style);
+
+// Kjør toggleTableRows umiddelbart
 (function() {
-    console.log("Initialiserer: Skjuler tabell");
     toggleTableRows(false);
 })();
 
@@ -327,6 +336,18 @@ async function waitForElement(selector, maxAttempts = 20) {
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
     
+    // Fjern CSS-styling
+    style.remove();
+    
+    // Skjul radene umiddelbart
+    toggleTableRows(false);
+    
+    // Backup: Prøv igjen etter at Webflow er helt ferdig
+    setTimeout(() => {
+        toggleTableRows(false);
+        console.log("Kjørte toggleTableRows på nytt etter timeout");
+    }, 500);
+
     // Fjern all eksisterende styling som kan påvirke tabellen
     const style = document.createElement('style');
     style.textContent = `
@@ -343,9 +364,6 @@ document.addEventListener('DOMContentLoaded', function () {
         existingStyle.remove();
     }
     
-    // Skjul radene når siden lastes
-    toggleTableRows(false);
-
     // Håndter url_form
     const urlForm = document.getElementById('url_form');
     const sokButton = document.getElementById('sok_button');
