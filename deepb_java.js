@@ -217,8 +217,8 @@ async function populateTable(results) {
 // Hjelpefunksjon for å oppdatere en rad
 async function updateRow(row, result) {
     try {
-        // Vis raden
-        row.style.display = 'grid';
+        // Vis raden med CSS-klasse i stedet for inline style
+        row.classList.remove('hidden-row');
 
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
