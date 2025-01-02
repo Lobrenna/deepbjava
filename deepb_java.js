@@ -389,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+    
 
     if (sokDeepbButton) {
         console.log("Legger til click handler på sok_deepb");
