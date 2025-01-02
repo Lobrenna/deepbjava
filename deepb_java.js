@@ -294,94 +294,22 @@ async function toggleTableRows(show = false) {
     });
 }
 
-// Kjør toggleTableRows når DOM er klar
-document.addEventListener('DOMContentLoaded', function () {
+// Vent til DOM er helt lastet
+document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded");
-    
-    // Skjul radene umiddelbart
     toggleTableRows(false);
-    
-    // Backup: Prøv igjen etter at Webflow er helt ferdig
-    setTimeout(() => {
-        toggleTableRows(false);
-        console.log("Kjørte toggleTableRows på nytt etter timeout");
-    }, 500);
+});
 
-    // Håndter url_form
-    const urlForm = document.getElementById('url_form');
-    const sokButton = document.getElementById('sok_button');
-    const sokDeepbButton = document.getElementById('sok_deepb');
-
-    if (urlForm) {
-        urlForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            await fetchSummaryFromUrl(); // Kun hent beskrivelse
-        });
-    }
-
-    // Håndter deepb_form
-    const deepbForm = document.getElementById('deepb_form');
-    if (deepbForm) {
-        deepbForm.setAttribute('data-wf-form-id', 'none');
-        deepbForm.removeAttribute('data-name');
-        
-        deepbForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const searchText = document.getElementById('firma_text');
-            if (!searchText || !searchText.value.trim()) {
-                alert("Vennligst fyll inn søketekst.");
-                return;
-            }
-            await performSearch(searchText.value.trim());
-        });
-    }
-
-    // Kun én event listener for sok_button
-    if (sokButton) {
-        sokButton.addEventListener('click', async function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const urlInput = document.getElementById('firma_url');
-            if (!urlInput || !urlInput.value.trim()) {
-                alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
-                return;
-            }
-
-            const strippedUrl = stripUrl(urlInput.value.trim());
-            if (!strippedUrl) {
-                alert("Ugyldig URL. Vennligst skriv inn en korrekt URL.");
-                return;
-            }
-            urlInput.value = strippedUrl;
-            
-            await fetchSummaryFromUrl(); // Kun hent beskrivelse, ikke oppdater tabell
-        });
-    }
-
-    // Kun én event listener for sok_deepb
-    if (sokDeepbButton) {
-        sokDeepbButton.addEventListener('click', async function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const searchText = document.getElementById('firma_text');
-            if (!searchText || !searchText.value.trim()) {
-                alert("Vennligst fyll inn søketekst.");
-                return;
-            }
-            
-            await performSearch(searchText.value.trim()); // Nå oppdateres tabellen kun her
-        });
-    }
+// Kjør når siden er helt lastet
+window.addEventListener('load', function() {
+    console.log("Window fully loaded");
+    toggleTableRows(false);
 });
 
 // Kjør når Webflow er klar
-if (window.Webflow) {
-    window.Webflow.push(() => {
+if (window.Webflow && window.Webflow.push) {
+    window.Webflow.push(function() {
+        console.log("Webflow ready");
         toggleTableRows(false);
     });
 }
