@@ -1,3 +1,4 @@
+<script>
 // 1) Funksjon for å utføre DeepB-søk
 async function performSearch(searchText, numResults = 20) {
     const button = document.getElementById('sok_deepb');
@@ -101,7 +102,7 @@ async function fetchSummaryFromUrl() {
         button.style.opacity = '0.7';
         button.style.cursor = 'wait';
         button.style.pointerEvents = 'none';
-        
+
         // Sett spinner med tekst "Henter..."
         button.innerHTML = `
             <div class="w-embed" style="display: inline-block">
@@ -183,7 +184,6 @@ async function populateTable(results) {
     try {
         console.log("Starter populering av tabell med resultater:", results);
 
-        // Finn tabellen i den aktive tab-panen
         const activePane = document.querySelector('.w-tab-pane.w--tab-active');
         if (!activePane) {
             throw new Error("Fant ikke aktiv tab-pane");
@@ -195,47 +195,33 @@ async function populateTable(results) {
         }
 
         // Fjern eventuelle tidligere dupliserte rader
-        console.log("Fjerner gamle dupliserte rader...");
         const existingDuplicates = table.querySelectorAll('[id^="rad"][id$="_dupe"]');
         existingDuplicates.forEach(row => row.remove());
 
-        // Oppdater de første 4 radene
-        console.log("Oppdaterer de første 4 radene...");
+        // Oppdater de første 4 radene og gjør dem synlige
         for (let i = 0; i < Math.min(results.length, 4); i++) {
             const result = results[i];
             const row = document.getElementById(`rad${i + 1}`);
-            if (!row) {
-                console.warn(`Fant ikke rad${i + 1}, hopper over`);
-                continue;
+            if (row) {
+                row.style.visibility = 'visible';
+                await updateRow(row, result);
             }
-            await updateRow(row, result);
         }
 
-        // Dupliser rader for resten av resultatene
-        console.log("Starter duplisering av rader");
+        // Dupliser rader for resultater utover de første 4
         for (let i = 4; i < results.length; i++) {
             const result = results[i];
             const baseRowIndex = (i % 4) + 1;
             const originalRow = document.getElementById(`rad${baseRowIndex}`);
-            
-            if (!originalRow) {
-                console.warn(`Fant ikke original rad${baseRowIndex}, hopper over`);
-                continue;
-            }
 
-            const newRow = originalRow.cloneNode(true);
-            newRow.id = `rad${i + 1}_dupe`;
-            await updateRow(newRow, result);
-            
-            // Legg til den nye raden i tabellen
-            console.log(`Legger til ny rad: ${newRow.id}`);
-            table.appendChild(newRow);
+            if (originalRow) {
+                const newRow = originalRow.cloneNode(true);
+                newRow.id = `rad${baseRowIndex}_dupe_${Math.floor(i/4)}`;
+                await updateRow(newRow, result);
+                table.appendChild(newRow);
+            }
         }
 
-        // Vis alle rader
-        console.log("Viser alle rader...");
-        await toggleTableRows(true);
-        
         console.log("Tabell populert vellykket");
         return true;
 
@@ -291,7 +277,7 @@ function stripUrl(inputUrl) {
     try {
         let strippedUrl = inputUrl.replace(/^(https?:\/\/)?(www\.)?/i, '');
         strippedUrl = strippedUrl.replace(/\/+$/, '');
-        
+
         if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(strippedUrl)) {
             console.error("Ugyldig URL-format:", strippedUrl);
             return null;
@@ -306,14 +292,14 @@ function stripUrl(inputUrl) {
 // Gjør toggleTableRows asynkron
 async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
-    const rows = document.querySelectorAll('[id^="rad"]');
-    console.log(`Fant ${rows.length} rader å toggle`);
     
-    for (const row of rows) {
-        row.style.display = show ? 'grid' : 'none';
-        console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
-        // Vent litt mellom hver rad for å unngå DOM-blokkering
-        await new Promise(resolve => setTimeout(resolve, 10));
+    // Håndter de originale 4 radene
+    for (let i = 1; i <= 4; i++) {
+        const row = document.getElementById(`rad${i}`);
+        if (row) {
+            row.style.visibility = show ? 'visible' : 'hidden';
+            console.log(`Satte visibility: ${show ? 'visible' : 'hidden'} på rad ${row.id}`);
+        }
     }
 }
 
@@ -341,7 +327,7 @@ document.head.appendChild(style);
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
 async function waitForElement(selector, maxAttempts = 20) {
     console.log(`Venter på element: ${selector}`);
-    
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const element = document.querySelector(selector);
         if (element) {
@@ -356,13 +342,13 @@ async function waitForElement(selector, maxAttempts = 20) {
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
-    
+
     // Fjern CSS-styling
     style.remove();
-    
+
     // Skjul radene umiddelbart
     toggleTableRows(false);
-    
+
     // Backup: Prøv igjen etter at Webflow er helt ferdig
     setTimeout(() => {
         toggleTableRows(false);
@@ -376,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
         urlForm.addEventListener('submit', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const urlInput = document.getElementById('firma_url');
             if (!urlInput || !urlInput.value.trim()) {
                 alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
@@ -391,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log("Strippet URL:", strippedUrl);
             urlInput.value = strippedUrl;
-            
+
             fetchSummaryFromUrl();
         });
     }
@@ -404,12 +390,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Fjern Webflow's form listeners
         deepbForm.setAttribute('data-wf-form-id', 'none');
         deepbForm.removeAttribute('data-name');
-        
+
         deepbForm.addEventListener('submit', function(e) {
             console.log("DeepB form submission intercepted");
             e.preventDefault();
             e.stopPropagation();
-            
+
             const searchText = document.getElementById('firma_text');
             if (!searchText || !searchText.value.trim()) {
                 alert("Vennligst fyll inn søketekst.");
@@ -440,6 +426,25 @@ document.addEventListener('DOMContentLoaded', function () {
             performSearch(searchText.value.trim());
         });
     }
+
+    // Legg til event listener for 'sok_button'
+    if (sokButton) {
+        sokButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            fetchSummaryFromUrl();
+        });
+    }
+
+    // Legg til event listener for ENTER-tasten i 'firma_url' feltet
+    const firmaUrlInput = document.getElementById('firma_url');
+    if (firmaUrlInput) {
+        firmaUrlInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                fetchSummaryFromUrl();
+            }
+        });
+    }
 });
 
 // Kjør når siden er helt lastet, inkludert alle ressurser
@@ -455,3 +460,4 @@ if (window.Webflow && window.Webflow.push) {
         toggleTableRows(false);
     });
 }
+</script>
