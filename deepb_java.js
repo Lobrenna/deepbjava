@@ -18,17 +18,7 @@ async function performSearch(searchText, numResults = 20) {
         if (!document.querySelector('#spinner-style')) {
             const style = document.createElement('style');
             style.id = 'spinner-style';
-            style.textContent = '
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                .spinner circle {
-                    stroke-dasharray: 90, 150;
-                    stroke-dashoffset: 0;
-                    transform-origin: center;
-                }
-            ';
+            style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } .spinner circle { stroke-dasharray: 90, 150; stroke-dashoffset: 0; transform-origin: center; }';
             document.head.appendChild(style);
         }
 
@@ -41,7 +31,7 @@ async function performSearch(searchText, numResults = 20) {
             "Authorization": 'Bearer o9QOWEjSbx5xFLW'
         };
 
-        const url = new URL('https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}');
+        const url = new URL(`https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}`);
         url.searchParams.append('limit', numResults);
 
         console.log("Fetching from URL:", url.toString());
@@ -53,9 +43,9 @@ async function performSearch(searchText, numResults = 20) {
         });
 
         if (!response.ok) {
-            console.error('HTTP error! status: ${response.status}');
+            console.error(`HTTP error! status: ${response.status}`);
             console.error("Response headers:", Object.fromEntries(response.headers));
-            throw new Error('HTTP error! status: ${response.status}');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
@@ -97,13 +87,7 @@ async function fetchSummaryFromUrl() {
         button.style.pointerEvents = 'none';
 
         // Sett spinner med tekst "Henter..."
-        button.innerHTML = '
-            <div class="w-embed" style="display: inline-block">
-                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
-                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
-                </svg>
-            </div>
-            Henter...';
+        button.innerHTML = '<div class="w-embed" style="display: inline-block"><svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle></svg></div>Henter...';
 
         const urlInput = document.getElementById('firma_url');
         const firmaText = document.getElementById('firma_text');
@@ -199,7 +183,7 @@ async function populateTable(results) {
             const result = results[i];
             const row = document.getElementById('rad${i + 1}');
             if (!row) {
-                console.warn('Fant ikke rad${i + 1}, hopper over');
+                console.warn(`Fant ikke rad${i + 1}, hopper over`);
                 continue;
             }
             await updateRow(row, result);
@@ -213,7 +197,7 @@ async function populateTable(results) {
             const originalRow = document.getElementById('rad${baseRowIndex}');
 
             if (!originalRow) {
-                console.warn('Fant ikke original rad${baseRowIndex}, hopper over');
+                console.warn(`Fant ikke original rad${baseRowIndex}, hopper over`);
                 continue;
             }
 
@@ -222,7 +206,7 @@ async function populateTable(results) {
             await updateRow(newRow, result);
 
             // Legg til den nye raden i tabellen
-            console.log('Legger til ny rad: ${newRow.id}');
+            console.log(`Legger til ny rad: ${newRow.id}`);
             table.appendChild(newRow);
         }
 
@@ -395,14 +379,13 @@ function showDetailModal(result) {
         document.body.appendChild(backdrop);
     }
 
-    modal.innerHTML = '
-        <div style="position: relative; padding: 20px;">
-            <h3 style="margin-top: 0;">' + result.domene + '</h3>
-            <p><strong>Likhetsscore:</strong> ' + result.score + '</p>
-            <p><strong>Beskrivelse:</strong></p>
-            <p>' + result.firmabeskrivelse + '</p>
-            <button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px; background: #000; color: white; border: none; border-radius: 4px; cursor: pointer;">Lukk</button>
-        </div>';
+    modal.innerHTML = '<div style="position: relative; padding: 20px;">' +
+        '<h3 style="margin-top: 0;">' + result.domene + '</h3>' +
+        '<p><strong>Likhetsscore:</strong> ' + result.score + '</p>' +
+        '<p><strong>Beskrivelse:</strong></p>' +
+        '<p>' + result.firmabeskrivelse + '</p>' +
+        '<button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px; background: #000; color: white; border: none; border-radius: 4px; cursor: pointer;">Lukk</button>' +
+        '</div>';
 
     modal.style.display = 'block';
     backdrop.style.display = 'block';
