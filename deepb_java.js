@@ -302,8 +302,9 @@ if (window.Webflow) {
     window.Webflow.destroy();
 }
 
-// Kjør toggleTableRows umiddelbart
+// Kjør toggleTableRows umiddelbart når scriptet lastes
 (function() {
+    console.log("Initialiserer: Skjuler tabell");
     toggleTableRows(false);
 })();
 
@@ -354,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function () {
         urlForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             e.stopPropagation();
-            await fetchSummaryFromUrl(); // Vent på at beskrivelsen hentes
+            await fetchSummaryFromUrl(); // Kun hent beskrivelse
         });
     }
 
@@ -396,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             urlInput.value = strippedUrl;
             
-            await fetchSummaryFromUrl();
+            await fetchSummaryFromUrl(); // Kun hent beskrivelse
         });
     }
 
@@ -404,6 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (sokDeepbButton) {
         sokDeepbButton.addEventListener('click', async function(event) {
             event.preventDefault();
+            event.stopPropagation();
             
             const searchText = document.getElementById('firma_text');
             if (!searchText || !searchText.value.trim()) {
@@ -411,21 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             
-            await performSearch(searchText.value.trim());
+            await performSearch(searchText.value.trim()); // Utfør søk og vis tabell kun når denne knappen trykkes
         });
     }
 });
-
-// Kjør når siden er helt lastet, inkludert alle ressurser
-window.addEventListener('load', function() {
-    console.log("Window fully loaded");
-    toggleTableRows(false);
-});
-
-// Kjør når Webflow er ferdig med sine operasjoner
-if (window.Webflow && window.Webflow.push) {
-    window.Webflow.push(function() {
-        console.log("Webflow ready");
-        toggleTableRows(false);
-    });
-}
