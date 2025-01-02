@@ -1,0 +1,360 @@
+// 1) Funksjon for å utføre DeepB-søk
+async function performSearch(searchText, numResults = 20) {
+    const button = document.getElementById('sok_deepb');
+    const originalButtonText = button.textContent;
+    const originalCursor = document.body.style.cursor;
+
+    try {
+        // Endre musepeker og knapp mens vi søker
+        document.body.style.cursor = 'wait';
+        button.style.opacity = '0.7';
+        button.style.cursor = 'wait';
+        // For en <button> kunne vi skrive button.disabled = true,
+        // men hvis dette også er en <a>, kan vi bruke pointerEvents.
+        button.style.pointerEvents = 'none';
+
+        // Sett spinner med tekst "Søker..."
+        button.innerHTML = `
+            <div class="w-embed" style="display: inline-block">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
+                </svg>
+            </div>
+            Søker...`;
+
+        // Legg til CSS for spinner-animasjonen (én gang)
+        if (!document.querySelector('#spinner-style')) {
+            const style = document.createElement('style');
+            style.id = 'spinner-style';
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .spinner circle {
+                    stroke-dasharray: 90, 150;
+                    stroke-dashoffset: 0;
+                    transform-origin: center;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        console.log("Performing search for:", searchText);
+
+        const headers = {
+            "accept": "application/json",
+            "Authorization": `Bearer o9QOWEjSbx5xFLW`
+        };
+
+        const url = new URL(`https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}`);
+        url.searchParams.append('limit', numResults);
+
+        console.log("Fetching from URL:", url.toString());
+
+        const response = await fetch(url, { headers });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Raw API response:", data);
+
+        const results = data.map(item => ({
+            domene: item.domain,
+            score: normalizeScore(item.score),
+            firmabeskrivelse: item.summary || 'Ingen beskrivelse tilgjengelig'
+        }));
+
+        populateTable(results);
+    } catch (error) {
+        console.error("Feil ved søk:", error);
+        alert('En feil oppstod under søket. Vennligst prøv igjen senere.');
+    } finally {
+        // Tilbakestill til opprinnelig utseende
+        document.body.style.cursor = originalCursor;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.pointerEvents = 'auto';
+        button.innerHTML = originalButtonText;
+    }
+}
+
+// 2) Funksjon for å hente oppsummering fra URL
+async function fetchSummaryFromUrl() {
+    const button = document.getElementById('sok_button');
+    const originalButtonText = button.textContent;
+    const originalCursor = document.body.style.cursor;
+
+    try {
+        // Endre musepeker og knapp mens vi henter
+        document.body.style.cursor = 'wait';
+        button.style.opacity = '0.7';
+        button.style.cursor = 'wait';
+        button.style.pointerEvents = 'none';
+        
+        // Sett spinner med tekst "Henter..."
+        button.innerHTML = `
+            <div class="w-embed" style="display: inline-block">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
+                </svg>
+            </div>
+            Henter...`;
+
+        const urlInput = document.getElementById('firma_url');
+        const firmaText = document.getElementById('firma_text');
+
+        if (!urlInput || !urlInput.value.trim()) {
+            alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
+            return;
+        }
+
+        const apiURL = `https://deepb.veta.no/summary_search/${encodeURIComponent(urlInput.value.trim())}`;
+        const headers = {
+            "accept": "application/json",
+            "Authorization": `Bearer o9QOWEjSbx5xFLW`
+        };
+
+        console.log("Henter oppsummering fra:", apiURL);
+
+        const response = await fetch(apiURL, { headers });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("API Response:", data);
+
+        if (data.message === "Domain not found in index.") {
+            alert("Domene ikke funnet i indeksen. Prøv et annet UR eller legg inn firmabeskrivelse manuelt.");
+            return;
+        }
+
+        // Oppdater firma_text input feltet med oppsummeringen
+        if (firmaText) {
+            firmaText.value = data.summary || "Ingen oppsummering tilgjengelig.";
+            console.log("Oppsummering plassert i søkefeltet");
+        } else {
+            console.error("Fant ikke firma_text input feltet");
+        }
+
+    } catch (error) {
+        console.error("Error fetching summary:", error);
+        alert("En feil oppstod under API-kallet. Vennligst prøv igjen senere.");
+    } finally {
+        // Tilbakestill til opprinnelig utseende
+        document.body.style.cursor = originalCursor;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.pointerEvents = 'auto';
+        button.innerHTML = originalButtonText;
+    }
+}
+
+// 3) Hjelpefunksjon for å normalisere score
+function normalizeScore(score) {
+    console.log("Normalizing score:", score);
+    try {
+        score = parseFloat(score);
+        if (score < 1 || score > 2) {
+            console.warn(`Uventet score verdi: ${score}`);
+            return "0%";
+        }
+        const normalized = (score - 1) * 100;
+        return `${normalized.toFixed(1)}%`;
+    } catch (error) {
+        console.error("Feil ved normalisering av score:", error);
+        return "0%";
+    }
+}
+
+// 4) Funksjon for å fylle tabell med resultater
+function populateTable(results) {
+    console.log("Populating table with results:", results);
+
+    const baseRows = ["rad1", "rad2", "rad3", "rad4"];
+    const firstRow = document.getElementById(baseRows[0]);
+
+    if (!firstRow) {
+        console.error("Fant ikke første rad (rad1)");
+        return;
+    }
+
+    const tableContainer = firstRow.parentElement;
+    if (!tableContainer) {
+        console.error("Fant ikke parent container for radene");
+        return;
+    }
+
+    // Fjern eventuelle tidligere dupliserte rader
+    const existingDuplicates = document.querySelectorAll('[id^="rad"][id$="_dupe"]');
+    existingDuplicates.forEach(row => row.remove());
+
+    console.log("Starter duplisering av rader");
+
+    // Dupliser rad1, rad2, rad3, rad4 for å få flere rader (opp til 20)
+    for (let i = 4; i < 20; i++) {
+        const originalRow = document.getElementById(baseRows[i % 4]);
+        if (!originalRow) {
+            console.error(`Fant ikke original rad med ID: ${baseRows[i % 4]}`);
+            continue;
+        }
+
+        const newRow = originalRow.cloneNode(true);
+        const newId = `rad${i + 1}_dupe`;
+        newRow.id = newId;
+        tableContainer.appendChild(newRow);
+        baseRows.push(newId);
+        console.log(`Dupliserte rad: ${newId}`);
+    }
+
+    // Fyll rader med resultater
+    results.forEach((result, index) => {
+        if (index >= baseRows.length) {
+            console.warn("Flere resultater enn tilgjengelige rader. Hopper over overskytende.");
+            return;
+        }
+
+        const rowId = baseRows[index];
+        const row = document.getElementById(rowId);
+        if (!row) {
+            console.error(`Rad med ID '${rowId}' ikke funnet.`);
+            return;
+        }
+
+        // Oppdater domenet
+        const gridCell = row.querySelector('.grid-cell-2');
+        if (!gridCell) {
+            console.error(`Grid Cell 2 ikke funnet for rad: ${rowId}`);
+            return;
+        }
+
+        const domainWrapper = gridCell.querySelector('.domene_wrapper');
+        if (domainWrapper) {
+            const protocol = result.domene.startsWith("http") ? "" : "https://";
+            const link = `${protocol}${result.domene}`;
+            domainWrapper.innerHTML = `
+                <a href="${link}" target="_blank" style="text-decoration: none; color: inherit; display: flex; align-items: center; height: 100%;">
+                    ${result.domene}
+                </a>`;
+            console.log(`Oppdaterte domene med link for rad ${rowId}: ${link}`);
+        } else {
+            console.error(`domene_wrapper ikke funnet i Grid Cell 2 for rad: ${rowId}`);
+        }
+
+        // Oppdater likhetscore
+        const likhetScore = row.querySelector('.likhetwrapper .likhetscore');
+        if (likhetScore) {
+            likhetScore.textContent = result.score;
+            console.log(`Oppdaterte likhetscore for rad ${rowId}: ${result.score}`);
+        }
+
+        // Oppdater beskrivelse
+        const beskrivelse = row.querySelector('.deepb_resultat .beskrivelse');
+        if (beskrivelse) {
+            beskrivelse.textContent = result.firmabeskrivelse;
+            console.log(`Oppdaterte beskrivelse for rad ${rowId}: ${result.firmabeskrivelse}`);
+        }
+    });
+}
+
+// Legg til dette helt øverst i filen, før DOMContentLoaded
+if (window.Webflow) {
+    console.log("Webflow detected, attempting to disable form handling");
+    window.Webflow.destroy();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    console.log("DOM fully loaded");
+
+    // Håndter url_form
+    const urlForm = document.getElementById('url_form');
+    console.log("Looking for url_form:", urlForm);
+
+    if (urlForm) {
+        console.log("Found url_form, current attributes:", {
+            'data-wf-form-id': urlForm.getAttribute('data-wf-form-id'),
+            'data-name': urlForm.getAttribute('data-name')
+        });
+
+        // Fjern Webflow's form listeners
+        urlForm.setAttribute('data-wf-form-id', 'none');
+        urlForm.removeAttribute('data-name');
+        
+        // Viktig: Håndter submit event på skjemaet
+        urlForm.addEventListener('submit', function(e) {
+            console.log("URL form submission intercepted");
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const urlInput = document.getElementById('firma_url');
+            if (!urlInput || !urlInput.value.trim()) {
+                alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
+                return;
+            }
+            fetchSummaryFromUrl();
+            return false;
+        });
+
+        // Finn sok_button og sett type="button"
+        const sokButton = document.getElementById('sok_button');
+        if (sokButton) {
+            sokButton.setAttribute('type', 'button');
+            sokButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                const urlInput = document.getElementById('firma_url');
+                if (!urlInput || !urlInput.value.trim()) {
+                    alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
+                    return;
+                }
+                fetchSummaryFromUrl();
+            });
+        }
+    }
+
+    // Håndter deepb_form
+    const deepbForm = document.getElementById('deepb_form');
+    console.log("Looking for deepb_form:", deepbForm);
+
+    if (deepbForm) {
+        // Fjern Webflow's form listeners
+        deepbForm.setAttribute('data-wf-form-id', 'none');
+        deepbForm.removeAttribute('data-name');
+        
+        deepbForm.addEventListener('submit', function(e) {
+            console.log("DeepB form submission intercepted");
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const searchText = document.getElementById('firma_text');
+            if (!searchText || !searchText.value.trim()) {
+                alert("Vennligst fyll inn søketekst.");
+                return;
+            }
+            performSearch(searchText.value.trim());
+            return false;
+        });
+    }
+
+    // Hent knappene
+    const sokDeepbButton = document.getElementById('sok_deepb');
+    const sokButton = document.getElementById('sok_button');
+
+    // Sett type="button" på begge knapper
+    if (sokDeepbButton) sokDeepbButton.setAttribute('type', 'button');
+    if (sokButton) sokButton.setAttribute('type', 'button');
+
+    // Knytt click-handlers til knappene
+    if (sokDeepbButton) {
+        sokDeepbButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            const searchText = document.getElementById('firma_text');
+            if (!searchText || !searchText.value.trim()) {
+                alert("Vennligst fyll inn søketekst.");
+                return;
+            }
+            performSearch(searchText.value.trim());
+        });
+    }
+});
