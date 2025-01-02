@@ -1,4 +1,4 @@
-<script>
+
 // 1) Funksjon for å utføre DeepB-søk
 async function performSearch(searchText, numResults = 20) {
     const button = document.getElementById('sok_deepb');
@@ -6,6 +6,9 @@ async function performSearch(searchText, numResults = 20) {
     const originalCursor = document.body.style.cursor;
 
     try {
+        // Skjul tabell før nytt søk
+        hideTable();
+
         // Endre musepeker og knapp mens vi søker
         document.body.style.cursor = 'wait';
         button.style.opacity = '0.7';
@@ -45,7 +48,7 @@ async function performSearch(searchText, numResults = 20) {
         console.log("Utfører API-kall...");
         const headers = {
             "accept": "application/json",
-            "Authorization": `Bearer o9QOWEjSbx5xFLW`
+            "Authorization": 'Bearer o9QOWEjSbx5xFLW'
         };
 
         const url = new URL(`https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}`);
@@ -54,9 +57,9 @@ async function performSearch(searchText, numResults = 20) {
         console.log("Fetching from URL:", url.toString());
 
         const response = await fetch(url, { 
-            method: 'GET',  // Eksplisitt spesifisere metode
+            method: 'GET',
             headers: headers,
-            mode: 'cors'    // Legg til CORS mode
+            mode: 'cors'
         });
 
         if (!response.ok) {
@@ -74,7 +77,7 @@ async function performSearch(searchText, numResults = 20) {
             firmabeskrivelse: item.summary || 'Ingen beskrivelse tilgjengelig'
         }));
 
-        populateTable(results);
+        await populateTable(results);
 
     } catch (error) {
         console.error("Feil ved søk:", error);
@@ -91,7 +94,6 @@ async function performSearch(searchText, numResults = 20) {
 
 // 2) Funksjon for å hente oppsummering fra URL
 async function fetchSummaryFromUrl() {
-    toggleTableRows(false);  // Skjul rader før søk
     const button = document.getElementById('sok_button');
     const originalButtonText = button.textContent;
     const originalCursor = document.body.style.cursor;
@@ -123,7 +125,7 @@ async function fetchSummaryFromUrl() {
         const apiURL = `https://deepb.veta.no/summary_search/${encodeURIComponent(urlInput.value.trim())}`;
         const headers = {
             "accept": "application/json",
-            "Authorization": `Bearer o9QOWEjSbx5xFLW`
+            "Authorization": 'Bearer o9QOWEjSbx5xFLW'
         };
 
         console.log("Henter oppsummering fra:", apiURL);
@@ -184,42 +186,61 @@ async function populateTable(results) {
     try {
         console.log("Starter populering av tabell med resultater:", results);
 
-        const activePane = document.querySelector('.w-tab-pane.w--tab-active');
-        if (!activePane) {
-            throw new Error("Fant ikke aktiv tab-pane");
+        // Vis table heading
+        const tableHeading = document.getElementById('table_heading');
+        if (tableHeading) {
+            tableHeading.style.display = 'grid';
         }
 
-        const table = activePane.querySelector('.table');
-        if (!table) {
-            throw new Error("Fant ikke .table i aktiv tab");
+        const activeTabPane = document.querySelector('.w-tab-pane.w--tab-active .table');
+        if (!activeTabPane) {
+            throw new Error("Fant ikke aktiv tab-pane med tabell");
         }
 
-        // Fjern eventuelle tidligere dupliserte rader
+        const table = activeTabPane;
+
+        // Fjern tidligere dupliserte rader
         const existingDuplicates = table.querySelectorAll('[id^="rad"][id$="_dupe"]');
         existingDuplicates.forEach(row => row.remove());
 
-        // Oppdater de første 4 radene og gjør dem synlige
-        for (let i = 0; i < Math.min(results.length, 4); i++) {
-            const result = results[i];
-            const row = document.getElementById(`rad${i + 1}`);
-            if (row) {
-                row.style.visibility = 'visible';
-                await updateRow(row, result);
-            }
+        // Finn alle fire originalrader
+        const rad1 = document.getElementById('rad1');
+        const rad2 = document.getElementById('rad2');
+        const rad3 = document.getElementById('rad3');
+        const rad4 = document.getElementById('rad4');
+        
+        if (!rad1 || !rad2 || !rad3 || !rad4) {
+            throw new Error("Fant ikke alle nødvendige originalrader");
         }
 
-        // Dupliser rader for resultater utover de første 4
+        const templates = [rad1, rad2, rad3, rad4];
+
+        // Oppdater eller opprett de første 4 radene
+        for (let i = 0; i < Math.min(results.length, 4); i++) {
+            const result = results[i];
+            const rowId = `rad${i + 1}`;
+            let row = document.getElementById(rowId);
+
+            if (!row) {
+                row = templates[i].cloneNode(true);
+                row.id = rowId;
+                table.appendChild(row);
+            }
+
+            row.style.display = 'grid';
+            await updateRow(row, result);
+        }
+
+        // Legg til flere rader for resultater over 4
         for (let i = 4; i < results.length; i++) {
             const result = results[i];
-            const baseRowIndex = (i % 4) + 1;
-            const originalRow = document.getElementById(`rad${baseRowIndex}`);
-
-            if (originalRow) {
-                const newRow = originalRow.cloneNode(true);
-                newRow.id = `rad${baseRowIndex}_dupe_${Math.floor(i/4)}`;
-                await updateRow(newRow, result);
-                table.appendChild(newRow);
-            }
+            // Velg riktig mal basert på posisjon (0-3)
+            const templateIndex = i % 4;
+            const newRow = templates[templateIndex].cloneNode(true);
+            newRow.id = `rad${i + 1}_dupe`;
+            newRow.style.display = 'grid';
+            await updateRow(newRow, result);
+            table.appendChild(newRow);
         }
 
         console.log("Tabell populert vellykket");
@@ -234,9 +255,6 @@ async function populateTable(results) {
 // Hjelpefunksjon for å oppdatere en rad
 async function updateRow(row, result) {
     try {
-        // Vis raden
-        row.style.display = 'grid';
-
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
         if (domainWrapper) {
@@ -289,17 +307,26 @@ function stripUrl(inputUrl) {
     }
 }
 
-// Gjør toggleTableRows asynkron
-async function toggleTableRows(show = false) {
-    console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
-    
-    // Håndter de originale 4 radene
-    for (let i = 1; i <= 4; i++) {
-        const row = document.getElementById(`rad${i}`);
-        if (row) {
-            row.style.visibility = show ? 'visible' : 'hidden';
-            console.log(`Satte visibility: ${show ? 'visible' : 'hidden'} på rad ${row.id}`);
+// Oppdatert funksjon for å skjule tabellen
+function hideTable() {
+    try {
+        console.log("Skjuler tabell");
+        
+        // Skjul table heading
+        const tableHeading = document.getElementById('table_heading');
+        if (tableHeading) {
+            tableHeading.style.display = 'none';
+        } else {
+            console.warn("Fant ikke table_heading element");
         }
+
+        // Skjul alle rader
+        const rows = document.querySelectorAll('[id^="rad"]');
+        rows.forEach(row => {
+            row.style.display = 'none';
+        });
+    } catch (error) {
+        console.error("Feil ved skjuling av tabell:", error);
     }
 }
 
@@ -309,51 +336,11 @@ if (window.Webflow) {
     window.Webflow.destroy();
 }
 
-// Kjør toggleTableRows umiddelbart
-(function() {
-    toggleTableRows(false);
-})();
-
-// Legg til CSS-styling for å skjule tabellen ved oppstart
-const style = document.createElement('style');
-style.textContent = `
-    .table .table-row-grey, 
-    .table .table-row-white {
-        display: none !important;
-    }
-`;
-document.head.appendChild(style);
-
-// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
-async function waitForElement(selector, maxAttempts = 20) {
-    console.log(`Venter på element: ${selector}`);
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const element = document.querySelector(selector);
-        if (element) {
-            console.log(`Fant element: ${selector}`);
-            return element;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log(`Forsøk ${attempt + 1}/${maxAttempts} på å finne ${selector}`);
-    }
-    throw new Error(`Kunne ikke finne element: ${selector}`);
-}
-
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
-
-    // Fjern CSS-styling
-    style.remove();
-
-    // Skjul radene umiddelbart
-    toggleTableRows(false);
-
-    // Backup: Prøv igjen etter at Webflow er helt ferdig
-    setTimeout(() => {
-        toggleTableRows(false);
-        console.log("Kjørte toggleTableRows på nytt etter timeout");
-    }, 500);
+    
+    // Skjul tabell ved oppstart
+    hideTable();
 
     // Håndter url_form
     const urlForm = document.getElementById('url_form');
@@ -431,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (sokButton) {
         sokButton.addEventListener('click', function(event) {
             event.preventDefault();
+            hideTable(); // Skjul tabell før nytt søk
             fetchSummaryFromUrl();
         });
     }
@@ -441,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function () {
         firmaUrlInput.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
+                hideTable(); // Skjul tabell før nytt søk
                 fetchSummaryFromUrl();
             }
         });
@@ -450,14 +439,11 @@ document.addEventListener('DOMContentLoaded', function () {
 // Kjør når siden er helt lastet, inkludert alle ressurser
 window.addEventListener('load', function() {
     console.log("Window fully loaded");
-    toggleTableRows(false);
 });
 
 // Kjør når Webflow er ferdig med sine operasjoner
 if (window.Webflow && window.Webflow.push) {
     window.Webflow.push(function() {
         console.log("Webflow ready");
-        toggleTableRows(false);
     });
 }
-</script>
