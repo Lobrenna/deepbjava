@@ -296,25 +296,46 @@ async function toggleTableRows(show = false) {
     }
 }
 
-// Legg til dette helt øverst i filen, før DOMContentLoaded
-if (window.Webflow) {
-    console.log("Webflow detected, attempting to disable form handling");
-    window.Webflow.destroy();
-}
-
-// Legg til CSS-styling for å skjule tabellen ved oppstart
-const style = document.createElement('style');
-style.textContent = `
-    .table .table-row-grey, 
-    .table .table-row-white {
-        display: none !important;
-    }
-`;
-document.head.appendChild(style);
-
-// Kjør toggleTableRows umiddelbart
+// Legg til dette helt øverst i filen, før alt annet
 (function() {
-    toggleTableRows(false);
+    // 1. Legg til inline style direkte i head
+    const styleElement = document.createElement('style');
+    styleElement.id = 'hide-table-style';
+    styleElement.textContent = `
+        [id^="rad"] { display: none !important; }
+        .table .table-row-grey, 
+        .table .table-row-white,
+        .table > div {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+    `;
+    document.head.insertBefore(styleElement, document.head.firstChild);
+
+    // 2. Kjør toggleTableRows så snart som mulig
+    function hideTable() {
+        const rows = document.querySelectorAll('[id^="rad"]');
+        rows.forEach(row => {
+            row.style.setProperty('display', 'none', 'important');
+            row.style.setProperty('visibility', 'hidden', 'important');
+            row.style.setProperty('opacity', '0', 'important');
+        });
+    }
+
+    // 3. Kjør hideTable umiddelbart og på DOMContentLoaded
+    hideTable();
+    document.addEventListener('DOMContentLoaded', hideTable);
+
+    // 4. Kjør også når Webflow er klar
+    if (window.Webflow) {
+        window.Webflow.push(hideTable);
+    }
+
+    // 5. Backup med setTimeout
+    setTimeout(hideTable, 0);
+    setTimeout(hideTable, 100);
+    setTimeout(hideTable, 500);
 })();
 
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
