@@ -2,19 +2,16 @@
 async function performSearch(searchText, numResults = 20) {
     const button = document.getElementById('sok_deepb');
     const originalButtonText = button.textContent;
-    const originalCursor = document.body.style.cursor;
 
     try {
         // Endre musepeker og knapp mens vi søker
-        document.body.style.cursor = 'wait';
-        button.style.opacity = '0.7';
-        button.style.cursor = 'wait';
-        button.style.pointerEvents = 'none';
-
+        document.body.classList.add('waiting');
+        button.classList.add('button-loading');
+        
         // Sett spinner med tekst "Søker..."
         button.innerHTML = `
             <div class="w-embed" style="display: inline-block">
-                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                <svg class="spinner" viewBox="0 0 50 50">
                     <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
                 </svg>
             </div>
@@ -59,10 +56,8 @@ async function performSearch(searchText, numResults = 20) {
         alert('En feil oppstod under søket. Vennligst prøv igjen senere.');
     } finally {
         // Tilbakestill til opprinnelig utseende
-        document.body.style.cursor = originalCursor;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-        button.style.pointerEvents = 'auto';
+        document.body.classList.remove('waiting');
+        button.classList.remove('button-loading');
         button.innerHTML = originalButtonText;
     }
 }
@@ -72,19 +67,16 @@ async function fetchSummaryFromUrl() {
     toggleTableRows(false);  // Skjul rader før søk
     const button = document.getElementById('sok_button');
     const originalButtonText = button.textContent;
-    const originalCursor = document.body.style.cursor;
 
     try {
         // Endre musepeker og knapp mens vi henter
-        document.body.style.cursor = 'wait';
-        button.style.opacity = '0.7';
-        button.style.cursor = 'wait';
-        button.style.pointerEvents = 'none';
+        document.body.classList.add('waiting');
+        button.classList.add('button-loading');
         
         // Sett spinner med tekst "Henter..."
         button.innerHTML = `
             <div class="w-embed" style="display: inline-block">
-                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                <svg class="spinner" viewBox="0 0 50 50">
                     <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
                 </svg>
             </div>
@@ -132,10 +124,8 @@ async function fetchSummaryFromUrl() {
         alert("En feil oppstod under API-kallet. Vennligst prøv igjen senere.");
     } finally {
         // Tilbakestill til opprinnelig utseende
-        document.body.style.cursor = originalCursor;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-        button.style.pointerEvents = 'auto';
+        document.body.classList.remove('waiting');
+        button.classList.remove('button-loading');
         button.innerHTML = originalButtonText;
     }
 }
@@ -282,11 +272,28 @@ function stripUrl(inputUrl) {
     }
 }
 
-// Legg til CSS-klasse i head
+// Legg til CSS-klasser i head
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
     .hidden-row {
         visibility: hidden !important;
+    }
+    .waiting {
+        cursor: wait !important;
+    }
+    .button-loading {
+        opacity: 0.7 !important;
+        cursor: wait !important;
+        pointer-events: none !important;
+    }
+    .spinner {
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 `;
 document.head.appendChild(styleSheet);
