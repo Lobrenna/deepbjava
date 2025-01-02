@@ -12,7 +12,14 @@ async function performSearch(searchText, numResults = 20) {
         button.style.pointerEvents = 'none';
 
         // Sett spinner med tekst "Søker..."
-        button.innerHTML = '<div class="w-embed" style="display: inline-block"><svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle></svg></div>Søker...';
+        button.innerHTML = `
+            <div class="w-embed" style="display: inline-block">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
+                </svg>
+            </div>
+            Søker...`;
+
         // Legg til CSS for spinner-animasjonen (én gang)
         if (!document.querySelector('#spinner-style')) {
             const style = document.createElement('style');
@@ -94,9 +101,15 @@ async function fetchSummaryFromUrl() {
         button.style.opacity = '0.7';
         button.style.cursor = 'wait';
         button.style.pointerEvents = 'none';
-
+        
         // Sett spinner med tekst "Henter..."
-        button.innerHTML = '<div class="w-embed" style="display: inline-block"><svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle></svg></div>Henter...';
+        button.innerHTML = `
+            <div class="w-embed" style="display: inline-block">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
+                </svg>
+            </div>
+            Henter...`;
 
         const urlInput = document.getElementById('firma_url');
         const firmaText = document.getElementById('firma_text');
@@ -204,7 +217,7 @@ async function populateTable(results) {
             const result = results[i];
             const baseRowIndex = (i % 4) + 1;
             const originalRow = document.getElementById(`rad${baseRowIndex}`);
-
+            
             if (!originalRow) {
                 console.warn(`Fant ikke original rad${baseRowIndex}, hopper over`);
                 continue;
@@ -213,7 +226,7 @@ async function populateTable(results) {
             const newRow = originalRow.cloneNode(true);
             newRow.id = `rad${i + 1}_dupe`;
             await updateRow(newRow, result);
-
+            
             // Legg til den nye raden i tabellen
             console.log(`Legger til ny rad: ${newRow.id}`);
             table.appendChild(newRow);
@@ -222,7 +235,7 @@ async function populateTable(results) {
         // Vis alle rader
         console.log("Viser alle rader...");
         await toggleTableRows(true);
-
+        
         console.log("Tabell populert vellykket");
         return true;
 
@@ -237,19 +250,13 @@ async function updateRow(row, result) {
     try {
         // Vis raden
         row.style.display = 'grid';
-        
-        // Gjør raden klikkbar
-        row.classList.add('table-row-clickable');
-        row.onclick = function() {
-            showDetailModal(result);
-        };
 
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
         if (domainWrapper) {
             const protocol = result.domene.startsWith("http") ? "" : "https://";
-            const link = protocol + result.domene;
-            domainWrapper.innerHTML = '<a href="' + link + '" target="_blank">' + result.domene + '</a>';
+            const link = `${protocol}${result.domene}`;
+            domainWrapper.innerHTML = `<a href="${link}" target="_blank">${result.domene}</a>`;
             console.log(`Oppdaterte domene for ${row.id}: ${result.domene}`);
         } else {
             console.warn(`Fant ikke domene-wrapper for rad ${row.id}`);
@@ -284,7 +291,7 @@ function stripUrl(inputUrl) {
     try {
         let strippedUrl = inputUrl.replace(/^(https?:\/\/)?(www\.)?/i, '');
         strippedUrl = strippedUrl.replace(/\/+$/, '');
-
+        
         if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(strippedUrl)) {
             console.error("Ugyldig URL-format:", strippedUrl);
             return null;
@@ -301,7 +308,7 @@ async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
     const rows = document.querySelectorAll('[id^="rad"]');
     console.log(`Fant ${rows.length} rader å toggle`);
-
+    
     for (const row of rows) {
         row.style.display = show ? 'grid' : 'none';
         console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
@@ -334,7 +341,7 @@ document.head.appendChild(style);
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
 async function waitForElement(selector, maxAttempts = 20) {
     console.log(`Venter på element: ${selector}`);
-
+    
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const element = document.querySelector(selector);
         if (element) {
@@ -347,20 +354,15 @@ async function waitForElement(selector, maxAttempts = 20) {
     throw new Error(`Kunne ikke finne element: ${selector}`);
 }
 
-// Legg til etter eksisterende CSS-styling
-const style = document.createElement('style');
-style.textContent = '.table-row-clickable { cursor: pointer; } .table-row-clickable:hover { background-color: rgba(0,0,0,0.05); }';
-document.head.appendChild(style);
-
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
-
+    
     // Fjern CSS-styling
     style.remove();
-
+    
     // Skjul radene umiddelbart
     toggleTableRows(false);
-
+    
     // Backup: Prøv igjen etter at Webflow er helt ferdig
     setTimeout(() => {
         toggleTableRows(false);
@@ -374,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function () {
         urlForm.addEventListener('submit', function(e) {
             e.preventDefault();
             e.stopPropagation();
-
+            
             const urlInput = document.getElementById('firma_url');
             if (!urlInput || !urlInput.value.trim()) {
                 alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
@@ -389,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log("Strippet URL:", strippedUrl);
             urlInput.value = strippedUrl;
-
+            
             fetchSummaryFromUrl();
         });
     }
@@ -402,12 +404,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Fjern Webflow's form listeners
         deepbForm.setAttribute('data-wf-form-id', 'none');
         deepbForm.removeAttribute('data-name');
-
+        
         deepbForm.addEventListener('submit', function(e) {
             console.log("DeepB form submission intercepted");
             e.preventDefault();
             e.stopPropagation();
-
+            
             const searchText = document.getElementById('firma_text');
             if (!searchText || !searchText.value.trim()) {
                 alert("Vennligst fyll inn søketekst.");
@@ -438,25 +440,6 @@ document.addEventListener('DOMContentLoaded', function () {
             performSearch(searchText.value.trim());
         });
     }
-
-    // Legg til event listener for 'sok_button'
-    if (sokButton) {
-        sokButton.addEventListener('click', function(event) {
-            event.preventDefault();
-            fetchSummaryFromUrl();
-        });
-    }
-
-    // Legg til event listener for ENTER-tasten i 'firma_url' feltet
-    const firmaUrlInput = document.getElementById('firma_url');
-    if (firmaUrlInput) {
-        firmaUrlInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                fetchSummaryFromUrl();
-            }
-        });
-    }
 });
 
 // Kjør når siden er helt lastet, inkludert alle ressurser
@@ -472,43 +455,3 @@ if (window.Webflow && window.Webflow.push) {
         toggleTableRows(false);
     });
 }
-
-// Legg til modal-relaterte funksjoner
-function showDetailModal(result) {
-    let modal = document.querySelector('.info-modal');
-    let backdrop = document.querySelector('.modal-backdrop');
-    
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.className = 'info-modal';
-        modal.style.cssText = 'display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000; max-width: 80%; max-height: 80vh; overflow-y: auto;';
-        document.body.appendChild(modal);
-        
-        backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop';
-        backdrop.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
-        document.body.appendChild(backdrop);
-    }
-
-    modal.innerHTML = '<div style="position: relative; padding: 20px;">' +
-        '<h3 style="margin-top: 0;">Mer firmainformasjon her</h3>' +
-        '<button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px; background: #000; color: white; border: none; border-radius: 4px; cursor: pointer;">Lukk</button>' +
-        '</div>';
-
-    modal.style.display = 'block';
-    backdrop.style.display = 'block';
-    backdrop.onclick = closeDetailModal;
-}
-
-function closeDetailModal() {
-    const modal = document.querySelector('.info-modal');
-    const backdrop = document.querySelector('.modal-backdrop');
-    
-    if (modal) modal.style.display = 'none';
-    if (backdrop) backdrop.style.display = 'none';
-}
-
-// Legg til event listener for Escape-tasten
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeDetailModal();
-});
