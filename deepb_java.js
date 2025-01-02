@@ -326,6 +326,16 @@ async function waitForElement(selector, maxAttempts = 20) {
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
     
+    // Fjern all eksisterende styling som kan påvirke tabellen
+    const style = document.createElement('style');
+    style.textContent = `
+        .table .table-row-grey, 
+        .table .table-row-white {
+            display: grid !important;
+        }
+    `;
+    document.head.appendChild(style);
+    
     // Fjern eventuell eksisterende CSS-styling
     const existingStyle = document.querySelector('style');
     if (existingStyle) {
@@ -378,11 +388,20 @@ document.addEventListener('DOMContentLoaded', function () {
         sokButton.addEventListener('click', function(event) {
             event.preventDefault();
             
-            // Kjør samme kode som ved ENTER i URL-feltet
-            if (urlForm) {
-                const submitEvent = new Event('submit');
-                urlForm.dispatchEvent(submitEvent);
+            const urlInput = document.getElementById('firma_url');
+            if (!urlInput || !urlInput.value.trim()) {
+                alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
+                return;
             }
+
+            const strippedUrl = stripUrl(urlInput.value.trim());
+            if (!strippedUrl) {
+                alert("Ugyldig URL. Vennligst skriv inn en korrekt URL.");
+                return;
+            }
+
+            urlInput.value = strippedUrl;
+            fetchSummaryFromUrl(); // Bare kjør denne, ikke trigger form submit
         });
     }
     
