@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             urlInput.value = strippedUrl;
             
-            await fetchSummaryFromUrl(); // Kun hent beskrivelse
+            await fetchSummaryFromUrl(); // Kun hent beskrivelse, ikke oppdater tabell
         });
     }
 
@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             
-            await performSearch(searchText.value.trim()); // Utfør søk og vis tabell kun når denne knappen trykkes
+            await performSearch(searchText.value.trim()); // Nå oppdateres tabellen kun her
         });
     }
 });
