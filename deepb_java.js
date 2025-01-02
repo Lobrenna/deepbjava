@@ -537,3 +537,60 @@ if (window.Webflow && window.Webflow.push) {
         toggleTableRows(false);
     });
 }
+
+// Legg til CSS-klasser i head
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    .hidden-row {
+        visibility: hidden !important;
+    }
+    .waiting {
+        cursor: wait !important;
+    }
+    .button-loading {
+        opacity: 0.7 !important;
+        cursor: wait !important;
+        pointer-events: none !important;
+    }
+    .spinner {
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    .info-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        max-width: 80%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+    }
+    .table-row-clickable {
+        cursor: pointer;
+    }
+    .table-row-clickable:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(styleSheet);
