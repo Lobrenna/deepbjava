@@ -282,15 +282,15 @@ function stripUrl(inputUrl) {
     }
 }
 
-// Gjør toggleTableRows mer spesifikk for tabellradene
+// Gjør toggleTableRows spesifikk for rad1-4
 async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
-    const rows = document.querySelectorAll('#rad1, #rad2, #rad3, #rad4, [id^="rad"][id$="_dupe"]');
+    const rows = document.querySelectorAll('#rad1, #rad2, #rad3, #rad4');
     console.log(`Fant ${rows.length} rader å toggle`);
     
     for (const row of rows) {
-        row.style.display = show ? 'grid' : 'none';
-        console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
+        row.style.visibility = show ? 'visible' : 'hidden';
+        console.log(`Satte visibility: ${show ? 'visible' : 'hidden'} på rad ${row.id}`);
     }
 }
 
