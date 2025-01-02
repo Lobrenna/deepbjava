@@ -12,13 +12,7 @@ async function performSearch(searchText, numResults = 20) {
         button.style.pointerEvents = 'none';
 
         // Sett spinner med tekst "Søker..."
-        button.innerHTML = '
-            <div class="w-embed" style="display: inline-block">
-                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
-                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
-                </svg>
-            </div>
-            Søker...';
+        button.innerHTML = '<div class="w-embed" style="display: inline-block"><svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle></svg></div>Søker...';
 
         // Legg til CSS for spinner-animasjonen (én gang)
         if (!document.querySelector('#spinner-style')) {
