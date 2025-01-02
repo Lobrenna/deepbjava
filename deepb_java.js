@@ -351,24 +351,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const sokDeepbButton = document.getElementById('sok_deepb');
 
     if (urlForm) {
-        urlForm.addEventListener('submit', function(e) {
+        urlForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             e.stopPropagation();
-            fetchSummaryFromUrl(); // Bare hent beskrivelse
+            await fetchSummaryFromUrl(); // Vent på at beskrivelsen hentes
         });
     }
 
     // Håndter deepb_form
     const deepbForm = document.getElementById('deepb_form');
-    console.log("Looking for deepb_form:", deepbForm);
-
     if (deepbForm) {
-        // Fjern Webflow's form listeners
         deepbForm.setAttribute('data-wf-form-id', 'none');
         deepbForm.removeAttribute('data-name');
         
-        deepbForm.addEventListener('submit', function(e) {
-            console.log("DeepB form submission intercepted");
+        deepbForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -377,16 +373,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert("Vennligst fyll inn søketekst.");
                 return;
             }
-            performSearch(searchText.value.trim()); // Kjør søk og vis tabell
-            toggleTableRows(true); // Vis tabellen etter søket
-            return false;
+            await performSearch(searchText.value.trim());
         });
     }
 
-    // Knytt click-handlers til knappene
+    // Kun én event listener for sok_button
     if (sokButton) {
         sokButton.addEventListener('click', async function(event) {
             event.preventDefault();
+            event.stopPropagation();
             
             const urlInput = document.getElementById('firma_url');
             if (!urlInput || !urlInput.value.trim()) {
@@ -399,40 +394,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert("Ugyldig URL. Vennligst skriv inn en korrekt URL.");
                 return;
             }
-
             urlInput.value = strippedUrl;
             
-            try {
-                // Bare kjør fetchSummaryFromUrl, ikke performSearch
-                await fetchSummaryFromUrl();
-            } catch (error) {
-                console.error("Feil ved henting av oppsummering:", error);
-            }
+            await fetchSummaryFromUrl();
         });
     }
-    
 
+    // Kun én event listener for sok_deepb
     if (sokDeepbButton) {
-        console.log("Legger til click handler på sok_deepb");
         sokDeepbButton.addEventListener('click', async function(event) {
-            console.log("sok_deepb knapp klikket");
             event.preventDefault();
             
             const searchText = document.getElementById('firma_text');
-            console.log("Søketekst:", searchText?.value);
-            
             if (!searchText || !searchText.value.trim()) {
                 alert("Vennligst fyll inn søketekst.");
                 return;
             }
             
-            try {
-                console.log("Starter søk...");
-                await performSearch(searchText.value.trim()); // Kjør søk og vis tabell
-                await toggleTableRows(true); // Vis tabellen etter søket
-            } catch (error) {
-                console.error("Feil under søk:", error);
-            }
+            await performSearch(searchText.value.trim());
         });
     }
 });
@@ -449,55 +428,4 @@ if (window.Webflow && window.Webflow.push) {
         console.log("Webflow ready");
         toggleTableRows(false);
     });
-}
-
-// Hent knappen med riktig ID
-const sokButton = document.getElementById('sok_button');
-console.log("Fant søkeknapp:", sokButton);
-
-if (sokButton) {
-    console.log("Legger til click handler på søkeknapp");
-    sokButton.addEventListener('click', async function(event) {
-        console.log("Søkeknapp klikket!");
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Hent URL-input
-        const urlInput = document.getElementById('firma_url');
-        console.log("URL input:", urlInput?.value);
-        
-        if (!urlInput || !urlInput.value.trim()) {
-            alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
-            return;
-        }
-
-        // Strip URL og oppdater input-feltet
-        const strippedUrl = stripUrl(urlInput.value.trim());
-        console.log("Strippet URL:", strippedUrl);
-        
-        if (!strippedUrl) {
-            alert("Ugyldig URL. Vennligst skriv inn en korrekt URL.");
-            return;
-        }
-        urlInput.value = strippedUrl;
-
-        try {
-            // Hent oppsummering først
-            console.log("Henter oppsummering...");
-            await fetchSummaryFromUrl();
-
-            // Deretter utfør søk med teksten fra firma_text
-            const searchText = document.getElementById('firma_text');
-            console.log("Søketekst:", searchText?.value);
-            
-            if (searchText && searchText.value.trim()) {
-                console.log("Starter søk...");
-                await performSearch(searchText.value.trim());
-            }
-        } catch (error) {
-            console.error("Feil under prosessering:", error);
-        }
-    });
-} else {
-    console.error("Fant ikke søkeknappen!");
 }
