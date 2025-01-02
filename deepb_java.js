@@ -280,6 +280,12 @@ async function updateRow(row, result) {
             console.warn(`Fant ikke beskrivelse-element for rad ${row.id}`);
         }
 
+        // Gjør raden klikkbar
+        row.classList.add('table-row-clickable');
+        
+        // Legg til click handler
+        row.onclick = () => showDetailModal(result);
+
     } catch (error) {
         console.error(`Feil ved oppdatering av rad ${row.id}:`, error);
         throw error;
@@ -353,6 +359,53 @@ async function waitForElement(selector, maxAttempts = 20) {
     }
     throw new Error(`Kunne ikke finne element: ${selector}`);
 }
+
+// Legg til ny funksjon for å vise detaljer
+function showDetailModal(result) {
+    // Opprett modal hvis den ikke eksisterer
+    let modal = document.querySelector('.info-modal');
+    let backdrop = document.querySelector('.modal-backdrop');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'info-modal';
+        document.body.appendChild(modal);
+        
+        backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        document.body.appendChild(backdrop);
+    }
+
+    // Formater innholdet
+    modal.innerHTML = `
+        <h3>${result.domene}</h3>
+        <p><strong>Likhetsscore:</strong> ${result.score}</p>
+        <p><strong>Beskrivelse:</strong></p>
+        <p>${result.firmabeskrivelse}</p>
+        <button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px;">Lukk</button>
+    `;
+
+    // Vis modal og backdrop
+    modal.style.display = 'block';
+    backdrop.style.display = 'block';
+
+    // Legg til click handler på backdrop
+    backdrop.onclick = closeDetailModal;
+}
+
+// Legg til funksjon for å lukke modal
+function closeDetailModal() {
+    const modal = document.querySelector('.info-modal');
+    const backdrop = document.querySelector('.modal-backdrop');
+    
+    if (modal) modal.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+}
+
+// Legg til event listener for Escape-tasten
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDetailModal();
+});
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
