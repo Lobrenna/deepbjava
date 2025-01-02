@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Knytt click-handlers til knappene
     if (sokButton) {
-        sokButton.addEventListener('click', function(event) {
+        sokButton.addEventListener('click', async function(event) {
             event.preventDefault();
             
             const urlInput = document.getElementById('firma_url');
@@ -401,7 +401,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             urlInput.value = strippedUrl;
-            fetchSummaryFromUrl(); // Bare kjør denne, ikke trigger form submit
+            
+            try {
+                // Bare kjør fetchSummaryFromUrl, ikke performSearch
+                await fetchSummaryFromUrl();
+            } catch (error) {
+                console.error("Feil ved henting av oppsummering:", error);
+            }
         });
     }
     
