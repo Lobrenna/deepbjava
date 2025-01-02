@@ -52,7 +52,7 @@ async function performSearch(searchText, numResults = 20) {
         }));
 
         await populateTable(results);
-        await toggleTableRows(true);  // Vis tabellen etter at dataene er lastet
+        await toggleTableRows(true);  // Vis radene etter at tabellen er populert
 
     } catch (error) {
         console.error("Feil ved søk:", error);
@@ -282,7 +282,7 @@ function stripUrl(inputUrl) {
     }
 }
 
-// Gjør toggleTableRows asynkron
+// Gjør toggleTableRows enklere siden vi bare trenger å vise radene
 async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
     const rows = document.querySelectorAll('[id^="rad"]');
@@ -291,52 +291,8 @@ async function toggleTableRows(show = false) {
     for (const row of rows) {
         row.style.display = show ? 'grid' : 'none';
         console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
-        // Vent litt mellom hver rad for å unngå DOM-blokkering
-        await new Promise(resolve => setTimeout(resolve, 10));
     }
 }
-
-// Legg til dette helt øverst i filen, før alt annet
-(function() {
-    // 1. Legg til inline style direkte i head
-    const styleElement = document.createElement('style');
-    styleElement.id = 'hide-table-style';
-    styleElement.textContent = `
-        [id^="rad"] { display: none !important; }
-        .table .table-row-grey, 
-        .table .table-row-white,
-        .table > div {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-    `;
-    document.head.insertBefore(styleElement, document.head.firstChild);
-
-    // 2. Kjør toggleTableRows så snart som mulig
-    function hideTable() {
-        const rows = document.querySelectorAll('[id^="rad"]');
-        rows.forEach(row => {
-            row.style.setProperty('display', 'none', 'important');
-            row.style.setProperty('visibility', 'hidden', 'important');
-            row.style.setProperty('opacity', '0', 'important');
-        });
-    }
-
-    // 3. Kjør hideTable umiddelbart og på DOMContentLoaded
-    hideTable();
-    document.addEventListener('DOMContentLoaded', hideTable);
-
-    // 4. Kjør også når Webflow er klar
-    if (window.Webflow) {
-        window.Webflow.push(hideTable);
-    }
-
-    // 5. Backup med setTimeout
-    setTimeout(hideTable, 0);
-    setTimeout(hideTable, 100);
-    setTimeout(hideTable, 500);
-})();
 
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
 async function waitForElement(selector, maxAttempts = 20) {
