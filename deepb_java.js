@@ -354,6 +354,21 @@ async function waitForElement(selector, maxAttempts = 20) {
     throw new Error(`Kunne ikke finne element: ${selector}`);
 }
 
+// Legg til CSS-styling for å skjule tabellen ved oppstart
+const style = document.createElement('style');
+style.textContent = `
+    .table .table-row-grey, 
+    .table .table-row-white {
+        display: none !important;
+    }
+`;
+document.head.appendChild(style);
+
+// Kjør toggleTableRows umiddelbart
+(function() {
+    toggleTableRows(false);
+})();
+
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
     
