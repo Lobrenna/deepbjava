@@ -300,32 +300,6 @@ async function toggleTableRows(show = false) {
     });
 }
 
-// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
-async function waitForElement(selector, maxAttempts = 20) {
-    console.log(`Venter på element: ${selector}`);
-    
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const element = document.querySelector(selector);
-        if (element) {
-            console.log(`Fant element: ${selector}`);
-            return element;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log(`Forsøk ${attempt + 1}/${maxAttempts} på å finne ${selector}`);
-    }
-    throw new Error(`Kunne ikke finne element: ${selector}`);
-}
-
-// Legg til CSS-styling for å skjule tabellen ved oppstart
-const style = document.createElement('style');
-style.textContent = `
-    .table .table-row-grey, 
-    .table .table-row-white {
-        display: none !important;
-    }
-`;
-document.head.appendChild(style);
-
 // Kjør toggleTableRows umiddelbart
 (function() {
     toggleTableRows(false);
@@ -333,9 +307,6 @@ document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
-    
-    // Fjern CSS-styling
-    style.remove();
     
     // Skjul radene umiddelbart
     toggleTableRows(false);
@@ -346,22 +317,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log("Kjørte toggleTableRows på nytt etter timeout");
     }, 500);
 
-    // Fjern all eksisterende styling som kan påvirke tabellen
-    const style = document.createElement('style');
-    style.textContent = `
-        .table .table-row-grey, 
-        .table .table-row-white {
-            display: grid !important;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Fjern eventuell eksisterende CSS-styling
-    const existingStyle = document.querySelector('style');
-    if (existingStyle) {
-        existingStyle.remove();
-    }
-    
     // Håndter url_form
     const urlForm = document.getElementById('url_form');
     const sokButton = document.getElementById('sok_button');
