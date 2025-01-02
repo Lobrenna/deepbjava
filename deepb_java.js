@@ -101,7 +101,7 @@ async function fetchSummaryFromUrl() {
         button.style.opacity = '0.7';
         button.style.cursor = 'wait';
         button.style.pointerEvents = 'none';
-        
+
         // Sett spinner med tekst "Henter..."
         button.innerHTML = `
             <div class="w-embed" style="display: inline-block">
@@ -217,7 +217,7 @@ async function populateTable(results) {
             const result = results[i];
             const baseRowIndex = (i % 4) + 1;
             const originalRow = document.getElementById(`rad${baseRowIndex}`);
-            
+
             if (!originalRow) {
                 console.warn(`Fant ikke original rad${baseRowIndex}, hopper over`);
                 continue;
@@ -226,7 +226,7 @@ async function populateTable(results) {
             const newRow = originalRow.cloneNode(true);
             newRow.id = `rad${i + 1}_dupe`;
             await updateRow(newRow, result);
-            
+
             // Legg til den nye raden i tabellen
             console.log(`Legger til ny rad: ${newRow.id}`);
             table.appendChild(newRow);
@@ -235,7 +235,7 @@ async function populateTable(results) {
         // Vis alle rader
         console.log("Viser alle rader...");
         await toggleTableRows(true);
-        
+
         console.log("Tabell populert vellykket");
         return true;
 
@@ -291,7 +291,7 @@ function stripUrl(inputUrl) {
     try {
         let strippedUrl = inputUrl.replace(/^(https?:\/\/)?(www\.)?/i, '');
         strippedUrl = strippedUrl.replace(/\/+$/, '');
-        
+
         if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(strippedUrl)) {
             console.error("Ugyldig URL-format:", strippedUrl);
             return null;
@@ -308,7 +308,7 @@ async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
     const rows = document.querySelectorAll('[id^="rad"]');
     console.log(`Fant ${rows.length} rader å toggle`);
-    
+
     for (const row of rows) {
         row.style.display = show ? 'grid' : 'none';
         console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
@@ -341,7 +341,7 @@ document.head.appendChild(style);
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
 async function waitForElement(selector, maxAttempts = 20) {
     console.log(`Venter på element: ${selector}`);
-    
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const element = document.querySelector(selector);
         if (element) {
@@ -356,13 +356,13 @@ async function waitForElement(selector, maxAttempts = 20) {
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
-    
+
     // Fjern CSS-styling
     style.remove();
-    
+
     // Skjul radene umiddelbart
     toggleTableRows(false);
-    
+
     // Backup: Prøv igjen etter at Webflow er helt ferdig
     setTimeout(() => {
         toggleTableRows(false);
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function () {
         urlForm.addEventListener('submit', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const urlInput = document.getElementById('firma_url');
             if (!urlInput || !urlInput.value.trim()) {
                 alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log("Strippet URL:", strippedUrl);
             urlInput.value = strippedUrl;
-            
+
             fetchSummaryFromUrl();
         });
     }
@@ -404,12 +404,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Fjern Webflow's form listeners
         deepbForm.setAttribute('data-wf-form-id', 'none');
         deepbForm.removeAttribute('data-name');
-        
+
         deepbForm.addEventListener('submit', function(e) {
             console.log("DeepB form submission intercepted");
             e.preventDefault();
             e.stopPropagation();
-            
+
             const searchText = document.getElementById('firma_text');
             if (!searchText || !searchText.value.trim()) {
                 alert("Vennligst fyll inn søketekst.");
@@ -438,6 +438,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             performSearch(searchText.value.trim());
+        });
+    }
+
+    // Legg til event listener for 'sok_button'
+    if (sokButton) {
+        sokButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            fetchSummaryFromUrl();
+        });
+    }
+
+    // Legg til event listener for ENTER-tasten i 'firma_url' feltet
+    const firmaUrlInput = document.getElementById('firma_url');
+    if (firmaUrlInput) {
+        firmaUrlInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                fetchSummaryFromUrl();
+            }
         });
     }
 });
