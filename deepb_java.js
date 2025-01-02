@@ -282,10 +282,10 @@ function stripUrl(inputUrl) {
     }
 }
 
-// Gjør toggleTableRows enklere siden vi bare trenger å vise radene
+// Gjør toggleTableRows mer spesifikk for tabellradene
 async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
-    const rows = document.querySelectorAll('[id^="rad"]');
+    const rows = document.querySelectorAll('.table .table-row-grey, .table .table-row-white');
     console.log(`Fant ${rows.length} rader å toggle`);
     
     for (const row of rows) {
