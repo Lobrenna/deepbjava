@@ -18,7 +18,7 @@ async function performSearch(searchText, numResults = 20) {
         if (!document.querySelector('#spinner-style')) {
             const style = document.createElement('style');
             style.id = 'spinner-style';
-            style.textContent = `
+            style.textContent = '
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
@@ -28,7 +28,7 @@ async function performSearch(searchText, numResults = 20) {
                     stroke-dashoffset: 0;
                     transform-origin: center;
                 }
-            `;
+            ';
             document.head.appendChild(style);
         }
 
@@ -38,10 +38,10 @@ async function performSearch(searchText, numResults = 20) {
         console.log("Utfører API-kall...");
         const headers = {
             "accept": "application/json",
-            "Authorization": `Bearer o9QOWEjSbx5xFLW`
+            "Authorization": 'Bearer o9QOWEjSbx5xFLW'
         };
 
-        const url = new URL(`https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}`);
+        const url = new URL('https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}');
         url.searchParams.append('limit', numResults);
 
         console.log("Fetching from URL:", url.toString());
@@ -53,9 +53,9 @@ async function performSearch(searchText, numResults = 20) {
         });
 
         if (!response.ok) {
-            console.error(`HTTP error! status: ${response.status}`);
+            console.error('HTTP error! status: ${response.status}');
             console.error("Response headers:", Object.fromEntries(response.headers));
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('HTTP error! status: ${response.status}');
         }
 
         const data = await response.json();
@@ -113,17 +113,17 @@ async function fetchSummaryFromUrl() {
             return;
         }
 
-        const apiURL = `https://deepb.veta.no/summary_search/${encodeURIComponent(urlInput.value.trim())}`;
+        const apiURL = 'https://deepb.veta.no/summary_search/${encodeURIComponent(urlInput.value.trim())}';
         const headers = {
             "accept": "application/json",
-            "Authorization": `Bearer o9QOWEjSbx5xFLW`
+            "Authorization": 'Bearer o9QOWEjSbx5xFLW'
         };
 
         console.log("Henter oppsummering fra:", apiURL);
 
         const response = await fetch(apiURL, { headers });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('HTTP error! status: ${response.status}');
         }
 
         const data = await response.json();
@@ -197,9 +197,9 @@ async function populateTable(results) {
         console.log("Oppdaterer de første 4 radene...");
         for (let i = 0; i < Math.min(results.length, 4); i++) {
             const result = results[i];
-            const row = document.getElementById(`rad${i + 1}`);
+            const row = document.getElementById('rad${i + 1}');
             if (!row) {
-                console.warn(`Fant ikke rad${i + 1}, hopper over`);
+                console.warn('Fant ikke rad${i + 1}, hopper over');
                 continue;
             }
             await updateRow(row, result);
@@ -210,19 +210,19 @@ async function populateTable(results) {
         for (let i = 4; i < results.length; i++) {
             const result = results[i];
             const baseRowIndex = (i % 4) + 1;
-            const originalRow = document.getElementById(`rad${baseRowIndex}`);
+            const originalRow = document.getElementById('rad${baseRowIndex}');
 
             if (!originalRow) {
-                console.warn(`Fant ikke original rad${baseRowIndex}, hopper over`);
+                console.warn('Fant ikke original rad${baseRowIndex}, hopper over');
                 continue;
             }
 
             const newRow = originalRow.cloneNode(true);
-            newRow.id = `rad${i + 1}_dupe`;
+            newRow.id = 'rad${i + 1}_dupe';
             await updateRow(newRow, result);
 
             // Legg til den nye raden i tabellen
-            console.log(`Legger til ny rad: ${newRow.id}`);
+            console.log('Legger til ny rad: ${newRow.id}');
             table.appendChild(newRow);
         }
 
