@@ -307,16 +307,6 @@ if (window.Webflow) {
     toggleTableRows(false);
 })();
 
-// Legg til CSS-styling for å skjule tabellen ved oppstart
-const style = document.createElement('style');
-style.textContent = `
-    .table .table-row-grey, 
-    .table .table-row-white {
-        display: none !important;
-    }
-`;
-document.head.appendChild(style);
-
 // Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
 async function waitForElement(selector, maxAttempts = 20) {
     console.log(`Venter på element: ${selector}`);
@@ -335,7 +325,13 @@ async function waitForElement(selector, maxAttempts = 20) {
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
-
+    
+    // Fjern eventuell eksisterende CSS-styling
+    const existingStyle = document.querySelector('style');
+    if (existingStyle) {
+        existingStyle.remove();
+    }
+    
     // Skjul radene når siden lastes
     toggleTableRows(false);
 
