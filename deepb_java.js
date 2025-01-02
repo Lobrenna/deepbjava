@@ -12,13 +12,29 @@ async function performSearch(searchText, numResults = 20) {
         button.style.pointerEvents = 'none';
 
         // Sett spinner med tekst "Søker..."
-        button.innerHTML = '<div class="w-embed" style="display: inline-block"><svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle></svg></div>Søker...';
+        button.innerHTML = '
+            <div class="w-embed" style="display: inline-block">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
+                </svg>
+            </div>
+            Søker...';
 
         // Legg til CSS for spinner-animasjonen (én gang)
         if (!document.querySelector('#spinner-style')) {
             const style = document.createElement('style');
             style.id = 'spinner-style';
-            style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } .spinner circle { stroke-dasharray: 90, 150; stroke-dashoffset: 0; transform-origin: center; }';
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .spinner circle {
+                    stroke-dasharray: 90, 150;
+                    stroke-dashoffset: 0;
+                    transform-origin: center;
+                }
+            `;
             document.head.appendChild(style);
         }
 
@@ -28,7 +44,7 @@ async function performSearch(searchText, numResults = 20) {
         console.log("Utfører API-kall...");
         const headers = {
             "accept": "application/json",
-            "Authorization": 'Bearer o9QOWEjSbx5xFLW'
+            "Authorization": `Bearer o9QOWEjSbx5xFLW`
         };
 
         const url = new URL(`https://deepb.veta.no/vector_search/${encodeURIComponent(searchText)}`);
@@ -87,7 +103,13 @@ async function fetchSummaryFromUrl() {
         button.style.pointerEvents = 'none';
 
         // Sett spinner med tekst "Henter..."
-        button.innerHTML = '<div class="w-embed" style="display: inline-block"><svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle></svg></div>Henter...';
+        button.innerHTML = '
+            <div class="w-embed" style="display: inline-block">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
+                </svg>
+            </div>
+            Henter...';
 
         const urlInput = document.getElementById('firma_url');
         const firmaText = document.getElementById('firma_text');
@@ -97,17 +119,17 @@ async function fetchSummaryFromUrl() {
             return;
         }
 
-        const apiURL = 'https://deepb.veta.no/summary_search/${encodeURIComponent(urlInput.value.trim())}';
+        const apiURL = `https://deepb.veta.no/summary_search/${encodeURIComponent(urlInput.value.trim())}`;
         const headers = {
             "accept": "application/json",
-            "Authorization": 'Bearer o9QOWEjSbx5xFLW'
+            "Authorization": `Bearer o9QOWEjSbx5xFLW`
         };
 
         console.log("Henter oppsummering fra:", apiURL);
 
         const response = await fetch(apiURL, { headers });
         if (!response.ok) {
-            throw new Error('HTTP error! status: ${response.status}');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
@@ -141,18 +163,18 @@ async function fetchSummaryFromUrl() {
 
 // 3) Hjelpefunksjon for å normalisere score
 function normalizeScore(score) {
-    console.log('Normalizing score:', score);
+    console.log("Normalizing score:", score);
     try {
         score = parseFloat(score);
         if (score < 1 || score > 2) {
-            console.warn('Uventet score verdi: ' + score);
-            return '0%';
+            console.warn(`Uventet score verdi: ${score}`);
+            return "0%";
         }
         const normalized = (score - 1) * 100;
-        return normalized.toFixed(1) + '%';
+        return `${normalized.toFixed(1)}%`;
     } catch (error) {
-        console.error('Feil ved normalisering av score:', error);
-        return '0%';
+        console.error("Feil ved normalisering av score:", error);
+        return "0%";
     }
 }
 
@@ -181,7 +203,7 @@ async function populateTable(results) {
         console.log("Oppdaterer de første 4 radene...");
         for (let i = 0; i < Math.min(results.length, 4); i++) {
             const result = results[i];
-            const row = document.getElementById('rad${i + 1}');
+            const row = document.getElementById(`rad${i + 1}`);
             if (!row) {
                 console.warn(`Fant ikke rad${i + 1}, hopper over`);
                 continue;
@@ -194,7 +216,7 @@ async function populateTable(results) {
         for (let i = 4; i < results.length; i++) {
             const result = results[i];
             const baseRowIndex = (i % 4) + 1;
-            const originalRow = document.getElementById('rad${baseRowIndex}');
+            const originalRow = document.getElementById(`rad${baseRowIndex}`);
 
             if (!originalRow) {
                 console.warn(`Fant ikke original rad${baseRowIndex}, hopper over`);
@@ -202,7 +224,7 @@ async function populateTable(results) {
             }
 
             const newRow = originalRow.cloneNode(true);
-            newRow.id = 'rad${i + 1}_dupe';
+            newRow.id = `rad${i + 1}_dupe`;
             await updateRow(newRow, result);
 
             // Legg til den nye raden i tabellen
@@ -226,51 +248,40 @@ async function populateTable(results) {
 // Hjelpefunksjon for å oppdatere en rad
 async function updateRow(row, result) {
     try {
-        console.log('Starter oppdatering av rad ' + row.id + ' med resultat:', result);
-        
-        // Vis raden og gjør den klikkbar
-        row.classList.remove('hidden-row');
-        row.classList.add('table-row-clickable');
-        
-        // Legg til click handler
-        row.addEventListener('click', function(e) {
-            console.log('Rad klikket:', row.id);
-            showDetailModal(result);
-        });
+        // Vis raden
+        row.style.display = 'grid';
 
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
         if (domainWrapper) {
-            const protocol = result.domene.startsWith('http') ? '' : 'https://';
-            const link = protocol + result.domene;
-            domainWrapper.innerHTML = '<a href="' + link + '" target="_blank">' + result.domene + '</a>';
-            console.log('Oppdaterte domene for ' + row.id + ': ' + result.domene);
+            const protocol = result.domene.startsWith("http") ? "" : "https://";
+            const link = `${protocol}${result.domene}`;
+            domainWrapper.innerHTML = `<a href="${link}" target="_blank">${result.domene}</a>`;
+            console.log(`Oppdaterte domene for ${row.id}: ${result.domene}`);
         } else {
-            console.warn('Fant ikke domene-wrapper for rad ' + row.id);
+            console.warn(`Fant ikke domene-wrapper for rad ${row.id}`);
         }
 
         // Oppdater score
         const scoreElement = row.querySelector('.deepb_resultat .likhetwrapper .likhetscore');
         if (scoreElement) {
             scoreElement.textContent = result.score;
-            console.log('Oppdaterte score for ' + row.id + ': ' + result.score);
+            console.log(`Oppdaterte score for ${row.id}: ${result.score}`);
         } else {
-            console.warn('Fant ikke score-element for rad ' + row.id);
+            console.warn(`Fant ikke score-element for rad ${row.id}`);
         }
 
         // Oppdater beskrivelse
         const beskrivelse = row.querySelector('.deepb_resultat .beskrivelse');
         if (beskrivelse) {
             beskrivelse.textContent = result.firmabeskrivelse;
-            console.log('Oppdaterte beskrivelse for ' + row.id);
+            console.log(`Oppdaterte beskrivelse for ${row.id}`);
         } else {
-            console.warn('Fant ikke beskrivelse-element for rad ' + row.id);
+            console.warn(`Fant ikke beskrivelse-element for rad ${row.id}`);
         }
 
-        console.log('Ferdig med oppdatering av rad ' + row.id);
-
     } catch (error) {
-        console.error('Feil ved oppdatering av rad ' + row.id + ':', error);
+        console.error(`Feil ved oppdatering av rad ${row.id}:`, error);
         throw error;
     }
 }
@@ -280,27 +291,27 @@ function stripUrl(inputUrl) {
     try {
         let strippedUrl = inputUrl.replace(/^(https?:\/\/)?(www\.)?/i, '');
         strippedUrl = strippedUrl.replace(/\/+$/, '');
-        
+
         if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(strippedUrl)) {
-            console.error('Ugyldig URL-format:', strippedUrl);
+            console.error("Ugyldig URL-format:", strippedUrl);
             return null;
         }
         return strippedUrl;
     } catch (error) {
-        console.error('Feil ved stripping av URL:', error);
+        console.error("Feil ved stripping av URL:", error);
         return null;
     }
 }
 
 // Gjør toggleTableRows asynkron
 async function toggleTableRows(show = false) {
-    console.log((show ? 'Viser' : 'Skjuler') + ' tabellrader...');
+    console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
     const rows = document.querySelectorAll('[id^="rad"]');
-    console.log('Fant ' + rows.length + ' rader å toggle');
+    console.log(`Fant ${rows.length} rader å toggle`);
 
     for (const row of rows) {
         row.style.display = show ? 'grid' : 'none';
-        console.log('Satte display: ' + (show ? 'grid' : 'none') + ' på rad ' + row.id);
+        console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
         // Vent litt mellom hver rad for å unngå DOM-blokkering
         await new Promise(resolve => setTimeout(resolve, 10));
     }
@@ -308,24 +319,8 @@ async function toggleTableRows(show = false) {
 
 // Legg til dette helt øverst i filen, før DOMContentLoaded
 if (window.Webflow) {
-    console.log('Webflow detected, attempting to disable form handling');
+    console.log("Webflow detected, attempting to disable form handling");
     window.Webflow.destroy();
-}
-
-// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
-async function waitForElement(selector, maxAttempts = 20) {
-    console.log('Venter på element: ' + selector);
-    
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const element = document.querySelector(selector);
-        if (element) {
-            console.log('Fant element: ' + selector);
-            return element;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log('Forsøk ' + (attempt + 1) + '/' + maxAttempts + ' på å finne ' + selector);
-    }
-    throw new Error('Kunne ikke finne element: ' + selector);
 }
 
 // Kjør toggleTableRows umiddelbart
@@ -333,81 +328,37 @@ async function waitForElement(selector, maxAttempts = 20) {
     toggleTableRows(false);
 })();
 
-// Definer CSS-stilene (men ikke legg dem til i head ennå)
-const modalCSS = {
-    modal: {
-        display: 'none',
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        background: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-        zIndex: '1000',
-        maxWidth: '80%',
-        maxHeight: '80vh',
-        overflowY: 'auto'
-    },
-    backdrop: {
-        display: 'none',
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0,0,0,0.5)',
-        zIndex: '999'
+// Legg til CSS-styling for å skjule tabellen ved oppstart
+const style = document.createElement('style');
+style.textContent = `
+    .table .table-row-grey, 
+    .table .table-row-white {
+        display: none !important;
     }
-};
+`;
+document.head.appendChild(style);
 
-// Oppdater showDetailModal funksjonen
-function showDetailModal(result) {
-    let modal = document.querySelector('.info-modal');
-    let backdrop = document.querySelector('.modal-backdrop');
-    
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.className = 'info-modal';
-        Object.assign(modal.style, modalCSS.modal);
-        document.body.appendChild(modal);
-        
-        backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop';
-        Object.assign(backdrop.style, modalCSS.backdrop);
-        document.body.appendChild(backdrop);
+// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
+async function waitForElement(selector, maxAttempts = 20) {
+    console.log(`Venter på element: ${selector}`);
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const element = document.querySelector(selector);
+        if (element) {
+            console.log(`Fant element: ${selector}`);
+            return element;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log(`Forsøk ${attempt + 1}/${maxAttempts} på å finne ${selector}`);
     }
-
-    modal.innerHTML = '<div style="position: relative; padding: 20px;">' +
-        '<h3 style="margin-top: 0;">' + result.domene + '</h3>' +
-        '<p><strong>Likhetsscore:</strong> ' + result.score + '</p>' +
-        '<p><strong>Beskrivelse:</strong></p>' +
-        '<p>' + result.firmabeskrivelse + '</p>' +
-        '<button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px; background: #000; color: white; border: none; border-radius: 4px; cursor: pointer;">Lukk</button>' +
-        '</div>';
-
-    modal.style.display = 'block';
-    backdrop.style.display = 'block';
-    backdrop.onclick = closeDetailModal;
+    throw new Error(`Kunne ikke finne element: ${selector}`);
 }
-
-// Legg til funksjon for å lukke modal
-function closeDetailModal() {
-    const modal = document.querySelector('.info-modal');
-    const backdrop = document.querySelector('.modal-backdrop');
-    
-    if (modal) modal.style.display = 'none';
-    if (backdrop) backdrop.style.display = 'none';
-}
-
-// Legg til event listener for Escape-tasten
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeDetailModal();
-});
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM fully loaded');
+    console.log("DOM fully loaded");
+
+    // Fjern CSS-styling
+    style.remove();
 
     // Skjul radene umiddelbart
     toggleTableRows(false);
@@ -415,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Backup: Prøv igjen etter at Webflow er helt ferdig
     setTimeout(() => {
         toggleTableRows(false);
-        console.log('Kjørte toggleTableRows på nytt etter timeout');
+        console.log("Kjørte toggleTableRows på nytt etter timeout");
     }, 500);
 
     // Håndter url_form
@@ -428,17 +379,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const urlInput = document.getElementById('firma_url');
             if (!urlInput || !urlInput.value.trim()) {
-                alert('Vennligst skriv inn en gyldig URL i tekstfeltet.');
+                alert("Vennligst skriv inn en gyldig URL i tekstfeltet.");
                 return;
             }
 
             const strippedUrl = stripUrl(urlInput.value.trim());
             if (!strippedUrl) {
-                alert('Ugyldig URL. Vennligst skriv inn en korrekt URL.');
+                alert("Ugyldig URL. Vennligst skriv inn en korrekt URL.");
                 return;
             }
 
-            console.log('Strippet URL:', strippedUrl);
+            console.log("Strippet URL:", strippedUrl);
             urlInput.value = strippedUrl;
 
             fetchSummaryFromUrl();
@@ -447,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Håndter deepb_form
     const deepbForm = document.getElementById('deepb_form');
-    console.log('Looking for deepb_form:', deepbForm);
+    console.log("Looking for deepb_form:", deepbForm);
 
     if (deepbForm) {
         // Fjern Webflow's form listeners
@@ -455,13 +406,13 @@ document.addEventListener('DOMContentLoaded', function () {
         deepbForm.removeAttribute('data-name');
 
         deepbForm.addEventListener('submit', function(e) {
-            console.log('DeepB form submission intercepted');
+            console.log("DeepB form submission intercepted");
             e.preventDefault();
             e.stopPropagation();
 
             const searchText = document.getElementById('firma_text');
             if (!searchText || !searchText.value.trim()) {
-                alert('Vennligst fyll inn søketekst.');
+                alert("Vennligst fyll inn søketekst.");
                 return;
             }
             performSearch(searchText.value.trim());
@@ -483,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
             event.preventDefault();
             const searchText = document.getElementById('firma_text');
             if (!searchText || !searchText.value.trim()) {
-                alert('Vennligst fyll inn søketekst.');
+                alert("Vennligst fyll inn søketekst.");
                 return;
             }
             performSearch(searchText.value.trim());
@@ -510,16 +461,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Kjør når siden er helt lastet
+// Kjør når siden er helt lastet, inkludert alle ressurser
 window.addEventListener('load', function() {
-    console.log('Window fully loaded');
+    console.log("Window fully loaded");
     toggleTableRows(false);
 });
 
-// Kjør når Webflow er ferdig
+// Kjør når Webflow er ferdig med sine operasjoner
 if (window.Webflow && window.Webflow.push) {
     window.Webflow.push(function() {
-        console.log('Webflow ready');
+        console.log("Webflow ready");
         toggleTableRows(false);
     });
 }
