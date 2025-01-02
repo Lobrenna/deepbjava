@@ -250,13 +250,19 @@ async function updateRow(row, result) {
     try {
         // Vis raden
         row.style.display = 'grid';
+        
+        // Gjør raden klikkbar
+        row.classList.add('table-row-clickable');
+        row.onclick = function() {
+            showDetailModal(result);
+        };
 
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
         if (domainWrapper) {
             const protocol = result.domene.startsWith("http") ? "" : "https://";
-            const link = `${protocol}${result.domene}`;
-            domainWrapper.innerHTML = `<a href="${link}" target="_blank">${result.domene}</a>`;
+            const link = protocol + result.domene;
+            domainWrapper.innerHTML = '<a href="' + link + '" target="_blank">' + result.domene + '</a>';
             console.log(`Oppdaterte domene for ${row.id}: ${result.domene}`);
         } else {
             console.warn(`Fant ikke domene-wrapper for rad ${row.id}`);
@@ -353,6 +359,11 @@ async function waitForElement(selector, maxAttempts = 20) {
     }
     throw new Error(`Kunne ikke finne element: ${selector}`);
 }
+
+// Legg til etter eksisterende CSS-styling
+const style = document.createElement('style');
+style.textContent = '.table-row-clickable { cursor: pointer; } .table-row-clickable:hover { background-color: rgba(0,0,0,0.05); }';
+document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
@@ -474,3 +485,43 @@ if (window.Webflow && window.Webflow.push) {
         toggleTableRows(false);
     });
 }
+
+// Legg til modal-relaterte funksjoner
+function showDetailModal(result) {
+    let modal = document.querySelector('.info-modal');
+    let backdrop = document.querySelector('.modal-backdrop');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'info-modal';
+        modal.style.cssText = 'display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000; max-width: 80%; max-height: 80vh; overflow-y: auto;';
+        document.body.appendChild(modal);
+        
+        backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        backdrop.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+        document.body.appendChild(backdrop);
+    }
+
+    modal.innerHTML = '<div style="position: relative; padding: 20px;">' +
+        '<h3 style="margin-top: 0;">Mer firmainformasjon her</h3>' +
+        '<button onclick="closeDetailModal()" style="margin-top: 15px; padding: 8px 16px; background: #000; color: white; border: none; border-radius: 4px; cursor: pointer;">Lukk</button>' +
+        '</div>';
+
+    modal.style.display = 'block';
+    backdrop.style.display = 'block';
+    backdrop.onclick = closeDetailModal;
+}
+
+function closeDetailModal() {
+    const modal = document.querySelector('.info-modal');
+    const backdrop = document.querySelector('.modal-backdrop');
+    
+    if (modal) modal.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+}
+
+// Legg til event listener for Escape-tasten
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDetailModal();
+});
