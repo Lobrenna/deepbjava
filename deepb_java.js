@@ -1,46 +1,47 @@
-// Legg til dette helt øverst i filen, før DOMContentLoaded
-if (window.Webflow) {
-    console.log("Webflow detected, attempting to disable form handling");
-    window.Webflow.destroy();
-}
-
-// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
-async function waitForElement(selector, maxAttempts = 20) {
-    console.log(`Venter på element: ${selector}`);
-    
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const element = document.querySelector(selector);
-        if (element) {
-            console.log(`Fant element: ${selector}`);
-            return element;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log(`Forsøk ${attempt + 1}/${maxAttempts} på å finne ${selector}`);
-    }
-    throw new Error(`Kunne ikke finne element: ${selector}`);
-}
-
 // 1) Funksjon for å utføre DeepB-søk
 async function performSearch(searchText, numResults = 20) {
     const button = document.getElementById('sok_deepb');
     const originalButtonText = button.textContent;
+    const originalCursor = document.body.style.cursor;
 
     try {
         // Endre musepeker og knapp mens vi søker
-        document.body.classList.add('waiting');
-        button.classList.add('button-loading');
-        
+        document.body.style.cursor = 'wait';
+        button.style.opacity = '0.7';
+        button.style.cursor = 'wait';
+        button.style.pointerEvents = 'none';
+
         // Sett spinner med tekst "Søker..."
         button.innerHTML = `
             <div class="w-embed" style="display: inline-block">
-                <svg class="spinner" viewBox="0 0 50 50">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
                     <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
                 </svg>
             </div>
             Søker...`;
 
+        // Legg til CSS for spinner-animasjonen (én gang)
+        if (!document.querySelector('#spinner-style')) {
+            const style = document.createElement('style');
+            style.id = 'spinner-style';
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .spinner circle {
+                    stroke-dasharray: 90, 150;
+                    stroke-dashoffset: 0;
+                    transform-origin: center;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         console.log("Performing search for:", searchText);
 
+        // Utfør API-kall
+        console.log("Utfører API-kall...");
         const headers = {
             "accept": "application/json",
             "Authorization": `Bearer o9QOWEjSbx5xFLW`
@@ -52,12 +53,14 @@ async function performSearch(searchText, numResults = 20) {
         console.log("Fetching from URL:", url.toString());
 
         const response = await fetch(url, { 
-            method: 'GET',
+            method: 'GET',  // Eksplisitt spesifisere metode
             headers: headers,
-            mode: 'cors'
+            mode: 'cors'    // Legg til CORS mode
         });
 
         if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+            console.error("Response headers:", Object.fromEntries(response.headers));
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -70,16 +73,17 @@ async function performSearch(searchText, numResults = 20) {
             firmabeskrivelse: item.summary || 'Ingen beskrivelse tilgjengelig'
         }));
 
-        await populateTable(results);
-        await toggleTableRows(true);  // Vis radene etter at tabellen er populert
+        populateTable(results);
 
     } catch (error) {
         console.error("Feil ved søk:", error);
         alert('En feil oppstod under søket. Vennligst prøv igjen senere.');
     } finally {
         // Tilbakestill til opprinnelig utseende
-        document.body.classList.remove('waiting');
-        button.classList.remove('button-loading');
+        document.body.style.cursor = originalCursor;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.pointerEvents = 'auto';
         button.innerHTML = originalButtonText;
     }
 }
@@ -89,16 +93,19 @@ async function fetchSummaryFromUrl() {
     toggleTableRows(false);  // Skjul rader før søk
     const button = document.getElementById('sok_button');
     const originalButtonText = button.textContent;
+    const originalCursor = document.body.style.cursor;
 
     try {
         // Endre musepeker og knapp mens vi henter
-        document.body.classList.add('waiting');
-        button.classList.add('button-loading');
+        document.body.style.cursor = 'wait';
+        button.style.opacity = '0.7';
+        button.style.cursor = 'wait';
+        button.style.pointerEvents = 'none';
         
         // Sett spinner med tekst "Henter..."
         button.innerHTML = `
             <div class="w-embed" style="display: inline-block">
-                <svg class="spinner" viewBox="0 0 50 50">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 20px; height: 20px; animation: spin 1s linear infinite;">
                     <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="5"></circle>
                 </svg>
             </div>
@@ -146,8 +153,10 @@ async function fetchSummaryFromUrl() {
         alert("En feil oppstod under API-kallet. Vennligst prøv igjen senere.");
     } finally {
         // Tilbakestill til opprinnelig utseende
-        document.body.classList.remove('waiting');
-        button.classList.remove('button-loading');
+        document.body.style.cursor = originalCursor;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.pointerEvents = 'auto';
         button.innerHTML = originalButtonText;
     }
 }
@@ -239,8 +248,8 @@ async function populateTable(results) {
 // Hjelpefunksjon for å oppdatere en rad
 async function updateRow(row, result) {
     try {
-        // Vis raden med CSS-klasse i stedet for inline style
-        row.classList.remove('hidden-row');
+        // Vis raden
+        row.style.display = 'grid';
 
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
@@ -294,53 +303,62 @@ function stripUrl(inputUrl) {
     }
 }
 
-// Legg til CSS-klasser i head
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-    .hidden-row {
-        visibility: hidden !important;
-    }
-    .waiting {
-        cursor: wait !important;
-    }
-    .button-loading {
-        opacity: 0.7 !important;
-        cursor: wait !important;
-        pointer-events: none !important;
-    }
-    .spinner {
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-`;
-document.head.appendChild(styleSheet);
-
-// Gjør toggleTableRows spesifikk for rad1-4
+// Gjør toggleTableRows asynkron
 async function toggleTableRows(show = false) {
     console.log(`${show ? 'Viser' : 'Skjuler'} tabellrader...`);
-    const rows = document.querySelectorAll('#rad1, #rad2, #rad3, #rad4');
+    const rows = document.querySelectorAll('[id^="rad"]');
     console.log(`Fant ${rows.length} rader å toggle`);
     
-    rows.forEach(row => {
-        if (row) {
-            if (show) {
-                row.classList.remove('hidden-row');
-            } else {
-                row.classList.add('hidden-row');
-            }
-            console.log(`${show ? 'Viste' : 'Skjulte'} rad ${row.id}`);
-        }
-    });
+    for (const row of rows) {
+        row.style.display = show ? 'grid' : 'none';
+        console.log(`Satte display: ${show ? 'grid' : 'none'} på rad ${row.id}`);
+        // Vent litt mellom hver rad for å unngå DOM-blokkering
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
 }
 
-// Vent til DOM er helt lastet
+// Legg til dette helt øverst i filen, før DOMContentLoaded
+if (window.Webflow) {
+    console.log("Webflow detected, attempting to disable form handling");
+    window.Webflow.destroy();
+}
+
+// Kjør toggleTableRows umiddelbart
+(function() {
+    toggleTableRows(false);
+})();
+
+// Legg til CSS-styling for å skjule tabellen ved oppstart
+const style = document.createElement('style');
+style.textContent = `
+    .table .table-row-grey, 
+    .table .table-row-white {
+        display: none !important;
+    }
+`;
+document.head.appendChild(style);
+
+// Hjelpefunksjon for å vente på at et element er synlig og tilgjengelig
+async function waitForElement(selector, maxAttempts = 20) {
+    console.log(`Venter på element: ${selector}`);
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const element = document.querySelector(selector);
+        if (element) {
+            console.log(`Fant element: ${selector}`);
+            return element;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log(`Forsøk ${attempt + 1}/${maxAttempts} på å finne ${selector}`);
+    }
+    throw new Error(`Kunne ikke finne element: ${selector}`);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
+    
+    // Fjern CSS-styling
+    style.remove();
     
     // Skjul radene umiddelbart
     toggleTableRows(false);
@@ -353,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Håndter url_form
     const urlForm = document.getElementById('url_form');
+
     if (urlForm) {
         urlForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -401,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Hent og sett opp knapper
+    // Hent knappene
     const sokDeepbButton = document.getElementById('sok_deepb');
     const sokButton = document.getElementById('sok_button');
 
@@ -423,15 +442,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Kjør når siden er helt lastet
-window.addEventListener('load', () => {
+// Kjør når siden er helt lastet, inkludert alle ressurser
+window.addEventListener('load', function() {
     console.log("Window fully loaded");
     toggleTableRows(false);
 });
 
-// Kjør når Webflow er klar
+// Kjør når Webflow er ferdig med sine operasjoner
 if (window.Webflow && window.Webflow.push) {
-    window.Webflow.push(() => {
+    window.Webflow.push(function() {
         console.log("Webflow ready");
         toggleTableRows(false);
     });
