@@ -248,8 +248,17 @@ async function populateTable(results) {
 // Hjelpefunksjon for å oppdatere en rad
 async function updateRow(row, result) {
     try {
-        // Vis raden
-        row.style.display = 'grid';
+        console.log(`Starter oppdatering av rad ${row.id} med resultat:`, result);
+        
+        // Vis raden med CSS-klasse i stedet for inline style
+        row.classList.remove('hidden-row');
+        row.classList.add('table-row-clickable');
+        
+        // Legg til click handler direkte på raden
+        row.addEventListener('click', function(e) {
+            console.log('Rad klikket:', row.id);
+            showDetailModal(result);
+        });
 
         // Oppdater domenet
         const domainWrapper = row.querySelector('.grid-cell-2 .domene_wrapper');
@@ -280,11 +289,7 @@ async function updateRow(row, result) {
             console.warn(`Fant ikke beskrivelse-element for rad ${row.id}`);
         }
 
-        // Gjør raden klikkbar
-        row.classList.add('table-row-clickable');
-        
-        // Legg til click handler
-        row.onclick = () => showDetailModal(result);
+        console.log(`Ferdig med oppdatering av rad ${row.id}`);
 
     } catch (error) {
         console.error(`Feil ved oppdatering av rad ${row.id}:`, error);
@@ -362,11 +367,14 @@ async function waitForElement(selector, maxAttempts = 20) {
 
 // Legg til ny funksjon for å vise detaljer
 function showDetailModal(result) {
+    console.log('Viser modal for:', result);
+    
     // Opprett modal hvis den ikke eksisterer
     let modal = document.querySelector('.info-modal');
     let backdrop = document.querySelector('.modal-backdrop');
     
     if (!modal) {
+        console.log('Oppretter ny modal');
         modal = document.createElement('div');
         modal.className = 'info-modal';
         document.body.appendChild(modal);
@@ -391,6 +399,8 @@ function showDetailModal(result) {
 
     // Legg til click handler på backdrop
     backdrop.onclick = closeDetailModal;
+    
+    console.log('Modal vist');
 }
 
 // Legg til funksjon for å lukke modal
